@@ -265,9 +265,7 @@ function loadStats() {
 d3.json("../data/us-named.json", function(error, data) {
     var usMap = topojson.feature(data,data.objects.states).features
     
-    svg.selectAll(".country").data(usMap).enter().append("path").attr("d", function(d) {
-      return path(d.geometry);
-    }).attr("class","state").on("click", clicked);
+    svg.selectAll(".country").data(usMap).enter().append("path").attr("d", path).attr("class","state").on("click", clicked);
     loadStats();
 });
 
@@ -287,7 +285,7 @@ function clicked(d) {
     centered = null;
   }
 
-  svg.selectAll(".country")
+  svg.selectAll("path")
       .classed("active", centered && function(d) { return d === centered; });
 
   svg.transition()
