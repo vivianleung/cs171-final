@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title></title>
+</head>
+<body>
+<script src="http://d3js.org/d3.v3.min.js"></script>
+<script src="http://d3js.org/queue.v1.min.js"></script>
+<script src="http://d3js.org/topojson.v1.min.js"></script>
+<script type="text/javascript" src="../libs/jquery-1.11.0.min.js"></script>
+<script src="../libs/FileSaver.js"></script>
+
+<div id="vis"></div>
+
+
+<script>
+
+    d3.json("../data/allData2003_2004.json",function(error,data){
+
+        var allDates = [];
+        var timeParser = d3.time.format("%b %-d, %Y %X %p").parse;
+
+        var newinfo = {};
+        var station = {};
+        var hours = {};
+        // for (var i = 0; i < 24; i++)
+        // {
+        //     hours[i] = {};
+        // }
+        var sum = 0; 
+        var hsum = 0;
+
+        //console.log(hours);
+        for (var key in data) {
+            data[key].map(function (d) {
+
+
+                // for(var i = 0; i < 24; i++)
+                // {
+                //     if (timeParser(d.date).getHours() == i)
+                //     {
+                //         hsum = hsum + d.value;
+                //         console.log(hsum);
+                //     }
+                //     else
+                //     {
+                //         hsum = 0
+                //     }
+                //     hours[i] = {"hour" : i, "sum" : hsum}
+                // }
+            })
+        }
+
+
+        for (var key in data) {
+            sum = 0;
+
+
+            data[key].map(function (d) {
+
+                for(var i = 0; i < 24; i++)
+                {
+                    if (timeParser(d.date).getHours() == i)
+                    {
+                        hsum = hsum + d.value;
+                        hours[i] = {"hour" : i, "sum" : hsum}
+                    }
+                    else
+                    {
+                        hsum = 0
+                    }
+                }
+
+
+
+            })
+
+
+
+            if (data.hasOwnProperty(key))
+            {
+                data[key].map(function (d) {
+
+
+                    sum = sum + d.value;
+                    station[key] = { "sum" : sum, "hourly" : hours}
+
+
+
+
+                })
+            }
+        }
+        // console.log(station);
+
+        saveToFile(station,"reducedMonthStationHour2003_2004.json")
+
+
+
+    })
+
+    var saveToFile = function(object, filename){
+        var blob, blobText;
+        blobText = [JSON.stringify(object)];
+        blob = new Blob(blobText, {
+            type: "text/plain;charset=utf-8"
+        });
+        saveAs(blob, filename);
+    }
+
+
+</script>
+
+
+</body>
+</html>

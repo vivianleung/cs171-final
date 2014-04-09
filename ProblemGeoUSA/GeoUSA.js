@@ -52,6 +52,8 @@ var tooltip = d3.select("body")
     .style("z-index", "10")
     .style("visibility", "hidden");
 
+
+
 function loadStations(stationData) {
     d3.csv("../data/NSRDB_StationsMeta.csv",function(error,data){
         
