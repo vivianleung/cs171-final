@@ -1,3 +1,4 @@
+
 svg{
   /*background: #eeeeee;*/
 }
@@ -46,9 +47,14 @@ text{
   opacity: .3;
 }
 
-#tooltip tspan{
+#tooltip {
+  position: absolute;
   line-height: 1;
   font-weight: 300;
+  text-align: center;
+  padding: 2px;  
+
+
 }
 
 h1 {

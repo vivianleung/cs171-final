@@ -26,7 +26,8 @@ var bbVis = {
     x: 100,
     y: 10,
     w: width - 100,
-    h: 300
+    h: 300,
+    p: 8
 };
 
 var detailVis = d3.select("#detailVis").append("svg").attr({
@@ -34,10 +35,13 @@ var detailVis = d3.select("#detailVis").append("svg").attr({
     height:500,
 })
 
+tooltip = d3.select('#vis').append("div").attr({id:'tooltip'}).style({visibility:'hidden'});
+
 var canvas = d3.select("#vis").append("svg").attr({
     width: width + margin.left + margin.right,
     height: height + margin.top + margin.bottom
     })
+
 
 var svg = canvas.append("g").attr({
         transform: "translate(" + margin.left + "," + margin.top + ")"
@@ -53,6 +57,7 @@ var colorDomains = {};
 var factors = {};
 var mins = {};
 var maxs = {};
+var tooltip;
 
 function loadFactor(factor) {
     svg.selectAll("path")
@@ -64,6 +69,10 @@ function loadFactor(factor) {
         }
       })
       .style("stroke", "white");
+    for (var k in factors) { 
+      factors[k].loaded = false;
+    }
+    factors[factor].loaded = true;
 }
 
 function loadStats() {
@@ -132,10 +141,12 @@ d3.json("../data/us-named.json", function(error, data) {
     var usMap = topojson.feature(data,data.objects.states).features
     
     svg.selectAll(".country").data(usMap).enter().append("path").attr("d", path).attr("class","state")
+      .on("mousemove", movetip)
       .on("mouseover", hover)
       .on("mouseout", hover);
 
     loadStats();
+
 });
 
 function hover(d) {
@@ -147,6 +158,25 @@ function hover(d) {
       });
 }
 
+function movetip(d) {
+  if (selected) {
+    var tipHTML = d.properties.name; 
+    for (var k in factors) {
+      if (factors[k].loaded) { 
+        tipHTML += "<br/>"+k+": "+factors[k][d.properties.name].rate_per_pop;
+      }
+    }
+
+    var tXY = d3.mouse(d3.select('#vis')[0][0]);
+    tooltip.html(tipHTML)
+      .style({visibility: 'visible'})
+      .style("left",(tXY[0]+bbVis.p)+'px')
+      .style("top", function() { return(tXY[1]+bbVis.x-bbVis.p)+'px';} ); 
+  }
+  else {
+    tooltip.style({visibility: 'hidden'});    
+  }
+}
 
 function createDetailVis(factor){
     var xDetailAxis, xDetailAxis, yDetailAxis, yDetailScale;
@@ -212,9 +242,10 @@ function createDetailVis(factor){
        .attr("dy", 10)
        .attr("dx", 50)
 
+
+
     loadedGraph = true;
 }
-
 
 function updateDetailVis(d){
     // data by hour

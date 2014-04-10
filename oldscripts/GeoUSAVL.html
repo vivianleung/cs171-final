@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Illuminating America</title>
+    <link href='http://fonts.googleapis.com/css?family=Roboto:900,700,400,300' rel='stylesheet' type='text/css'>
+    <link href='http://fonts.googleapis.com/css?family=Roboto+Condensed:300' rel='stylesheet' type='text/css'>
+</head>
+
+
+<body>
+<script src="http://d3js.org/d3.v3.min.js"></script>
+<script src="http://d3js.org/topojson.v1.min.js"></script>
+<script src="../libs/jquery-1.11.0.min.js"></script>
+<style type="text/css">
+    body{
+        background: #222222;
+        font-family: 'Roboto', sans-serif;
+        font-weight: 400;
+        color: lightslategrey;
+        text-align: center;
+    }
+    h1 {
+        font-weight: 900;
+        font-size: 36px;
+        margin-top: 40px;
+        margin-bottom: 20px;
+        color: white;
+    }
+    h2 {
+        text-align: center;
+        font-weight: 700;
+        font-size: 24px;
+        margin-top: 2px;
+        margin-bottom: 2px;
+        color: lightslategrey;
+
+    }
+    #selectors{
+        width: 100%;
+    }
+    #detailVis{ float:right;}
+    .overlay{ fill:none; pointer-events: all;}
+    .state{
+        fill: darkslategray;
+        stroke:  steelblue;
+    }
+    #terrTitle {fill: lightgrey; opacity: 0.7;}
+
+    .axis text {
+        font: 10px sans-serif;
+    }
+
+    .axis line,
+    .axis path {
+        fill: none;
+        stroke: white;
+        shape-rendering: crispEdges;
+    }
+    .axis text {fill:white;}
+    .axis .label, .axis .title {font-weight: 700}
+
+    .station{
+        fill:grey;
+    }
+    .station.hasData{
+        fill:magenta;
+     
+    }
+    .hourLine{
+        fill:none;
+        stroke:lightslategray;
+
+    }
+    .brush .extent{
+        fill:gray;
+        opacity: .3;
+    }
+    .tip { 
+        position: absolute;
+        text-align: center;
+        padding: 2px;
+        background: lightgrey; 
+        background-opacity: 0.8;
+        color: black; 
+        font-size: 12px;}
+    .tip#stn { font-weight: 700;}
+
+    .state.active, 
+    .station.active 
+     { stroke: orange; stroke-width: 2px; ; fill:gold; opacity: 1; }
+    .station.active {z-index: 2000;}
+    .detailVis text{fill:white;}
+    .hour {stroke: none; border: none;}
+
+
+
+
+
+
+</style>
+<h1>ILLUMINATING AMERICA</h1>
+<div id="selectors"><input type="checkbox" name="detailXY">Scale Hours Axes</input></div>
+<table>
+    <tr><td><div id="vis"></div></td><td><div id="detailVis"></div></td></tr>
+</table>
+<script src="GeoUSA.js"></script>
+
+</body>
+</html>

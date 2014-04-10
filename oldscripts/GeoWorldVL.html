@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title></title>
+</head>
+
+
+<body>
+<script src="http://d3js.org/d3.v3.min.js"></script>
+<script src="http://d3js.org/queue.v1.min.js"></script>
+<script src="http://d3js.org/topojson.v1.min.js"></script>
+<script type="text/javascript" src="../libs/jquery-1.11.0.min.js"></script>
+<script src="//code.jquery.com/ui/1.10.4/jquery-ui.js"></script>
+<script type="text/javascript" src="../libs/colorbrewer.js"></script>
+  <link rel="stylesheet" href="//code.jquery.com/ui/1.10.4/themes/smoothness/jquery-ui.css">
+
+
+
+<style type="text/css">
+    svg{
+        background: #eeeeee;
+    }
+
+    .country{
+/*        fill: none;
+*/        stroke:  steelblue;
+    }
+    text{
+        font-family: "Helvetica Neue", Roboto, sans-serif;
+        font-size: 9pt;
+        font-weight: 400;
+    }
+
+    table{
+        border:none;
+    }
+
+    .key path {
+      display: none;
+    }
+
+    .key line {
+        stroke: lightgrey;
+        shape-rendering: crispEdges;
+    }
+    .key text {
+        fill: black;
+    }
+
+
+
+</style>
+
+
+<table>
+    <tr>
+        <td><div id="vis"></div></td>
+        <td><div id="textLabel"></div></td>
+    </tr>
+</table>
+<div class="settings">
+    <label for="selectorYear">Year</label> 
+    <input id="selectorYear">
+    <label for="indicator">Indicator Search</label>
+    <input id="indicator">
+    <br/>
+    <select name="filtered" size="6"></select>
+    
+</div>
+
+
+
+<script src="GeoWorld.js"></script>
+
+
+
+</body>
+</html>
