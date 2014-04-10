@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html>
+  <head>
+      <title>What does SEX look like?</title>
+      <link href='http://fonts.googleapis.com/css?family=Roboto:400,300,100,700' rel='stylesheet' type='text/css'/>
+  </head>
+
+
+  <body>
+    <script src="http://d3js.org/d3.v3.min.js"></script>
+    <script src="http://d3js.org/topojson.v1.min.js"></script>
+    <link rel='stylesheet' type='text/css' href='styles.css'/>
+
+    <h1>What does SEX look like?</h1>
+    <form>
+        <input type="radio" id="radio1" name="radios" value="cly">
+          <label for="radio1">Chlamydia</label>
+        <input type="radio" id="radio2" name="radios" value="gon">
+          <label for="radio2">Gonorrhea</label>
+        <input type="radio" id="radio3" name="radios" value="teen">
+          <label for="radio3">Teen Pregnancy</label>
+        <input type="radio" id="radio4" name="radios" value="creampie">
+          <label for="radio4">"creampie" tag</label>
+        <input type="radio" id="radio5" name="radios" value="teen-tag">
+          <label for="radio5">"teen-tag"</label>
+      </form>
+    <table>
+        <tr><td><div id="vis"></div></td><td><div id="detailVis"></div></td></tr>
+    </table>
+
+
+    <script src="scripts.js"></script>
+  </body>
+</html>
