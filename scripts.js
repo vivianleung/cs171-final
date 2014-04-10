@@ -156,6 +156,8 @@ function hover(d) {
       .style("fill", function(d) {
         return (selected && d === selected) ? "orange" : colors[d["properties"]["name"]];
       });
+
+  movetip(d);
 }
 
 function movetip(d) {
@@ -174,8 +176,9 @@ function movetip(d) {
       .style("top", function() { return(tXY[1]+bbVis.x-bbVis.p)+'px';} ); 
   }
   else {
-    tooltip.style({visibility: 'hidden'});    
+    tooltip.style({visibility: 'hidden'});
   }
+
 }
 
 function createDetailVis(factor){
