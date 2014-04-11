@@ -108,7 +108,7 @@ function loadStats() {
       // create color scale
       colorDomains[factor] = d3.scale.linear()
           .domain([min, max])
-          .range(["green", "red"]);
+          .range(["pink", "red"]);
     });
   });
 
