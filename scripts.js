@@ -22,6 +22,7 @@ var loadedGraph = false;
 var width = 860 - margin.left - margin.right;
 var height = 400 - margin.bottom - margin.top;
 var selected;
+var clickedState;
 
 var bbVis = {
     x: 250,
@@ -238,7 +239,7 @@ function hover(d) {
 
   svg.selectAll("path")
       .style("fill", function(d) {
-        return (selected && d === selected) ? "#3B8686" : colors[d["properties"]["name"]];
+        return ((selected && d === selected) || (clickedState === d)) ? "#3B8686" : colors[d["properties"]["name"]];
       });
 
   movetip(d);
@@ -381,7 +382,7 @@ function updateForm(array) {
   if(captionText.length > 0) {
     text = "compare";
     captionText.forEach(function(d, i) {
-      text += " " + d.name;
+      text += " " + '<span class="factor">' + d.name + '</span>';
       // format punctuation and grammar
       if(i == captionText.length - 1 && captionText.length < 3) {
         text += " and..."
@@ -396,15 +397,15 @@ function updateForm(array) {
       }
     });
 
-    caption.text(text);
+    caption.html(text);
   }
 
   else if(currentCategory){
-    caption.text("show me " + currentCategory + " data on...");
+    caption.html("show me " + currentCategory + " data on...");
   }
 
   else {
-    caption.text("show me data from...");
+    caption.html("show me data from...");
   }
 
   // set radio button toggle for first selection
@@ -436,6 +437,18 @@ updateForm(categories);
 // sundial code
 
 function displaySundial(d) {
+  // hide tip
+  d3.select(".fa-arrow-down").style("display", "none");
+  d3.select("#tip > p").style("display", "none");
+
+  // toggle state selection
+  clickedState = (clickedState == d) ? null : d;
+
+  svg.selectAll("path")
+      .style("fill", function(e) {
+        return (clickedState == e) ? "#3B8686" : colors[e["properties"]["name"]];
+      });
+
   var points = [];
   var average = [];
 
@@ -456,7 +469,7 @@ function displaySundial(d) {
         return (i == 1) ? "#97d9d9" : "#00d9bd";
       },
       w: 400,
-      h: 350,
+      h: 400,
       labels: [d.properties.name, "National Average"]
     }
 
