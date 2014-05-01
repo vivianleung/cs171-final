@@ -5,16 +5,19 @@ body {
   width: 100%;
   margin: 0;
   padding: 0;
+  min-width: 1440px;
 }
 
 #top {
   height: 5px;
-  background-color: #3B8686; 
+  background-color: #3B8686;
+  min-width: 1440px;
 }
 
 #sub-top {
   height: 3px;
   background-color: #00d9bd; 
+  min-width: 1440px;
 }
 
 .state{
@@ -36,6 +39,10 @@ text{
   font: 10px sans-serif;
 }
 
+.axis text.label {
+  font-weight: 400;
+  font-size: 12pt;
+}
 .axis line,
 .axis path {
   fill: none;
@@ -145,13 +152,101 @@ h2#menu-caption {
   text-shadow: 1px 1px 0px #787878;
 }
 
-i.fa-arrow-left {
+i.fa-arrow-left, i.fa-arrow-down {
   top: 5px;
   position: relative;
   font-size: 30px;
   padding-right: 20px;
   color: #00d9bd;
   text-shadow: 1px 1px 0px #787878;
+}
+
+i.fa-arrow-down {
+  margin-top: -15px;
+  padding-right: 0;
+  animation: arrow-bounce 1.2s;
+  -webkit-animation: arrow-bounce 1.2s;
+  animation-iteration-count: infinite;
+  -webkit-animation-iteration-count: infinite;
+}
+
+@-webkit-keyframes arrow-bounce {
+  0% {
+    top: 0;
+  }
+
+  50% {
+    top: 10px;
+  }
+
+  100% {
+    top: 0;
+  }
+}
+@-moz-keyframes arrow-bounce {
+  0% {
+    top: 0;
+  }
+
+  50% {
+    top: 10px;
+  }
+
+  100% {
+    top: 0;
+  }
+}
+@-webkit-keyframes arrow-bounce {
+  0% {
+    top: 0;
+  }
+
+  50% {
+    top: 10px;
+  }
+
+  100% {
+    top: 0;
+  }
+}
+@-o-keyframes arrow-bounce {
+  0% {
+    top: 0;
+  }
+
+  50% {
+    top: 10px;
+  }
+
+  100% {
+    top: 0;
+  }
+}
+@-ms-keyframes arrow-bounce {
+  0% {
+    top: 0;
+  }
+
+  50% {
+    top: 10px;
+  }
+
+  100% {
+    top: 0;
+  }
+}
+@keyframes arrow-bounce {
+  0% {
+    top: 0;
+  }
+
+  50% {
+    top: 10px;
+  }
+
+  100% {
+    top: 0;
+  }
 }
 
 #menu {
@@ -163,4 +258,36 @@ i.fa-arrow-left {
   text-align: center;
   border-radius: 10px;
   padding-bottom: 20px;
+  border: 1px solid #00d9bd;
+}
+
+#stateTitle {
+  font-size: 20px;
+  font-weight: 600;
+}
+
+.stateLabel {
+  position: absolute;
+  color: #fff;
+}
+
+.factor {
+  color: #00d9bd;
+}
+
+#tip {
+  text-align: center;
+  width: 150px;
+  color: #fff;
+  position: absolute;
+  left: 110px;
+  top: 190px;
+}
+
+span.detail {
+  color: #00d9bd;
+}
+
+table {
+  margin: 0 auto;
 }

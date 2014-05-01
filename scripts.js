@@ -6,7 +6,15 @@ var margin = {
     top: 20,
     right: 40,
     bottom: 0,
-    left: 50
+    left: -60
+};
+
+var bbVis = {
+    x: 250,
+    y: 10,
+    w: width,
+    h: 300,
+    p: 8
 };
 
 var bbDetail = {
@@ -14,27 +22,24 @@ var bbDetail = {
     y: 50,
     w: 360,
     h: 320,
-    p: 20
+    p: 20,
+    r: 5
 };
 
 var loadedGraph = false;
 
-var width = 860 - margin.left - margin.right;
+var width = 700 - margin.left - margin.right;
 var height = 400 - margin.bottom - margin.top;
 var selected;
-
-var bbVis = {
-    x: 250,
-    y: 10,
-    w: width - 100,
-    h: 300,
-    p: 8
-};
+var clickedState;
 
 var detailVis = d3.select("#detailVis").append("svg").attr({
-    width:400,
-    height:350,
-})
+    width:(bbDetail.w+5*bbDetail.p),
+    height:(bbDetail.h+5*bbDetail.p),
+    })
+    .append("g")
+    .attr("transform", "translate("+(2*bbDetail.p)+","+bbDetail.p+")");
+
 
 
 tooltip = d3.select('#vis').append("div").attr({id:'tooltip'}).style("position", "absolute")
@@ -57,9 +62,20 @@ var path = d3.geo.path().projection(projection);
 
 var colors = {};
 var colorDomains = {};
+
+// each object in each array of R, G, and B represent corresponding components
+// of the blue (index 0) and red (index 1) scales
+
+var colorRanges = {
+  'r': [ {'min':160, 'range':141}, {'min':255, 'range':156} ], 
+  'g': [ {'min':218, 'range':126}, {'min':213, 'range':121}   ],
+  'b': [ {'min':242, 'range':150}, {'min':177, 'range':135}  ],
+}
+
 var factors = {};
 var mins = {};
 var maxs = {};
+var ranges = {};
 var averages = {};
 var tooltip;
 var xDetailAxis, xDetailAxis, yDetailAxis, yDetailScale;
@@ -70,72 +86,144 @@ function loadFactor(factor) {
     alert("Please de-select an option first!");
   }
   else {
-
-  
-    svg.selectAll("path")
-      .style("fill", function(d) {
-        if(d["properties"]["name"] in factors[factor]) {
-          // save most recent color
-          colors[d["properties"]["name"]] = colorDomains[factor](factors[factor][d["properties"]["name"]]["rate_per_pop"]);
-          return colors[d["properties"]["name"]];
-        }
-      })
-      .style("stroke", "white");
-
-
-
-    // UPDATE GRAPH
-
-    // update scales and axes
-    xDetailScale.domain([mins[factor], parseInt(maxs[factor]) + 1]);
-    yDetailScale.domain([maxs[factor],mins[factor]]);
-    xDetailAxis.scale(xDetailScale);
-    yDetailAxis.scale(yDetailScale);
-
-    detailVis.select("g.x.axis").call(xDetailAxis)
-          .selectAll("text") 
-            .style("text-anchor", "end")
-            .attr("dx", "-.8em")
-            .attr("dy", ".15em")
-            .attr("transform", function(d) {
-                return "rotate(-65)" 
-                });
-
-    detailVis.select("g.y.axis").call(yDetailAxis);
-
-
-
-    // load data for selected factor
-    var dataSet = [];
-    Object.keys(factors[factor]).forEach(function(id) {
-
-      dataSet.push(factors[factor][id]);
-    });
-    
-    // update title
-    detailVis.select('text.title').text(factor);
-
-    detailVis.selectAll("circle").remove();
-    // REMOVE CIRCLES
-
-
-    // add bars
-    var bars = detailVis.append("g")
-       .selectAll("circle")
-       .data(dataSet)
-       .enter()
-       .append("circle")
-       .attr("class", "stateDot")
-       .attr("cx", function(d) {
-          return xDetailScale(d["rate_per_pop"]);
-       })
-       .attr("cy", function(d) {
-          return yDetailScale(d["rate_per_pop"]);
-       })
-       .attr("r", 5);
     factors.loaded.push(factor);
+
+    // calculates RGB color value for datum based on selected factor(s)
+    var colorize = function(datum) {
+
+      var scaled_factors_sum = 0;
+      var scaled_factors = [];
+
+      // scaled value for the factor by factor's range
+      datum.forEach(function(raw_factor, i) {
+        scaled_factors.push((raw_factor - mins[factors.loaded[i]]) / ranges[factors.loaded[i]]);
+        scaled_factors_sum += scaled_factors[i];
+      })
+      var RGB = {};
+      // for each RGB component, sum of [(scaled color value, by factor value) * factor weight in datum]
+      for (var c in colorRanges) {
+        var prima_color = 0;          
+        scaled_factors.forEach(function(scaled_fact, i) {
+          var factor_ratio; 
+          if (scaled_factors_sum == 0) { factor_ratio = 1/scaled_factors.length }
+          else { factor_ratio = scaled_fact/scaled_factors_sum; }
+          // factor ratio scaling to weigh a state's factor values, i.e. to reflect whether there is correlation between factors
+          prima_color += (colorRanges[c][i]["min"] - scaled_fact*colorRanges[c][i]["range"]) * factor_ratio;
+        })
+        RGB[c] = Math.round(prima_color);
+      }
+
+    var color = "rgb("+RGB.r+","+RGB.g+","+RGB.b + ")";
+    return color;
   }
+    
+    // most recently selected factor
+    var factor = "";
+
+    // removes old circles
+    detailVis.select("g.circles").remove();
+
+    // if no factors selected, reset state colors to default color
+    if (factors.loaded.length == 0) {
+      svg.selectAll("path")
+        .style("fill", function(d) {
+          colors[d["properties"]["name"]] = "#97d9d9";
+          return "#97d9d9";
+        })
+      .style("stroke", "white");
+    }
+
+    // if factors are selected
+    else {
+      // sets state color
+      svg.selectAll("path")
+        .style("fill", function(d) { 
+          var values = [];
+          factors.loaded.forEach(function(f) {
+            if(d["properties"]["name"] in factors[f]) {
+              values.push(factors[f][d["properties"]["name"]]["rate_per_pop"]);
+            }
+          })
+          colors[d["properties"]["name"]] = colorize(values);          
+          return colors[d["properties"]["name"]];
+        })
+        .style("stroke", "white");
+
+    
+      // UPDATE GRAPH
+
+      // update scales and axes with appropriate domains
+      factor = factors.loaded[factors.loaded.length-1];
+      xDetailScale.domain([mins[factor], maxs[factor] + 1]);
+      yDetailScale.domain([maxs[factor], 0]);
+      xDetailAxis.scale(xDetailScale);
+      yDetailAxis.scale(yDetailScale);
+
+      var xAxis = detailVis.select("g.x.axis")
+
+      xAxis.call(xDetailAxis)
+          .selectAll("text:not(.label)") 
+          .style("text-anchor", "end")
+          .attr("dx", "-.8em").attr("dy", ".15em")
+          .attr("transform", function(d) { return "rotate(-65)" });
+
+      xAxis.select("text.label").text(factor)
+
+      detailVis.select("g.y.axis").call(yDetailAxis)
+        .select("text.label").text(factor);
+
+      // load data for selected factor
+      var dataSet = [];
+      Object.keys(factors[factor]).forEach(function(id) {
+        dataSet.push(factors[factor][id]);
+      });
+
+      // add bars
+      var bars = detailVis.append("g")
+         .attr("class","circles")
+         .attr("transform","translate("+bbDetail.p+","+bbDetail.p+")")
+         .selectAll("circle")
+         .data(dataSet)
+         .enter()
+         .append("circle")
+         .attr("class", "stateDot")
+         .attr("cx", function(d) {
+            return xDetailScale(d["rate_per_pop"]);
+         })
+         .attr("cy", function(d) {
+            return yDetailScale(d["rate_per_pop"]);
+         })
+         .attr("r", bbDetail.r);
+  
+    }
+
+  // update title
+  detailVis.select('text.title').text(factor);
+    
 }
+
+// possible tags
+var tags = {"cly": "chlamydia",
+            "syp": "syphilis",
+            "hiv": "HIV",
+            "gon": "gonorrhea",
+            "teen": "teen pregnancy",
+            "gdp": "GDP",
+            "pop": "population density",
+            "creampie": "teen tag",
+            "stateID": "state index",
+            "teen-tag": "creampie tag"};
+
+// possible tags
+var scales = {"cly": {scale: 100000, unit: "people"},
+              "syp": {scale: 100000, unit: "people"},
+              "hiv": {scale: 100000, unit: "people"},
+              "gon": {scale: 100000, unit: "people"},
+              "teen": {scale: 1000, unit: "teenage girls"},
+              "gdp": {scale: null, unit: "billions"},
+              "pop": {scale: null, unit: "millions"},
+              "teen-tag": {scale: 3, unit: "top 3"},
+              "creampie": {scale: 3, unit: "top 3"}};
 
 function loadStats() {
   // file names for each of the factors
@@ -170,12 +258,12 @@ function loadStats() {
       // save min and max
       mins[factor] = min;
       maxs[factor] = max;
+      ranges[factor] = max - min;
       averages[factor] = average/(Object.keys(data).length);
 
       // create color scale
       colorDomains[factor] = d3.scale.linear()
-          .domain([min, max])
-          .range(["#97d9d9", "#195c5c"]);
+          .domain([min, max]);
     });
   });
 
@@ -196,6 +284,7 @@ function loadStats() {
 
     mins["porn_avg_time"] = time_min;
     maxs["porn_avg_time"] = time_max;
+    ranges["porn_avg_time"] = time_max - time_min;
 
     data.forEach(function(factor) {
       var factor_name = "porn_"+factor[0];
@@ -213,7 +302,7 @@ function loadStats() {
       }
       mins[factor_name] = min;
       maxs[factor_name] = max;
-
+      ranges[factor_name] = max - min;
     })
   })
 
@@ -238,7 +327,7 @@ function hover(d) {
 
   svg.selectAll("path")
       .style("fill", function(d) {
-        return (selected && d === selected) ? "#3B8686" : colors[d["properties"]["name"]];
+        return ((selected && d === selected) || (clickedState === d)) ? "#3B8686" : colors[d["properties"]["name"]];
       });
 
   movetip(d);
@@ -249,7 +338,7 @@ function movetip(d) {
     var tipHTML = d.properties.name;
     if (factors.loaded.length > 0) {
       factors.loaded.forEach(function(selector){
-        tipHTML += "<br/>"+selector+": "+factors[selector][d.properties.name].rate_per_pop; 
+        tipHTML += "<br/>"+tags[selector]+": "+factors[selector][d.properties.name].rate_per_pop; 
 
       })
     }
@@ -257,8 +346,8 @@ function movetip(d) {
     var tXY = d3.mouse(d3.select('#vis')[0][0]);
     tooltip.html(tipHTML)
       .style({visibility: 'visible'})
-      .style("left",(tXY[0]+bbVis.p)+'px')
-      .style("top", function() { return(tXY[1] + bbVis.x - bbVis.p)+'px';} ); 
+      .style("left",(tXY[0]+bbVis.p+80)+'px')
+      .style("top", function() { return(tXY[1] + bbVis.x - bbVis.p - 5)+'px';} ); 
   }
   else {
     tooltip.style({visibility: 'hidden'});
@@ -268,40 +357,41 @@ function movetip(d) {
 
 function createDetailVis(){
 
+    // scales and axes (to update with domains of user-selected factors)
     xDetailScale = d3.scale.linear().range([10, bbDetail.w]);
     yDetailScale = d3.scale.linear().range([10, bbDetail.h]);
-
-    xDetailAxis = d3.svg.axis()
-        .orient("bottom")
-        .ticks(5);
-
-    yDetailAxis = d3.svg.axis()
-        .orient("left")
-        .ticks(6);
+    xDetailAxis = d3.svg.axis().orient("bottom").ticks(5);
+    yDetailAxis = d3.svg.axis().orient("left").ticks(6);
 
     // add x axis
     detailVis.append("g")
           .attr("class", "x axis")
-          .attr("transform", "translate("+bbDetail.p/2+"," + (bbDetail.h+bbDetail.p)  + ")")
-
+          .attr("transform", "translate("+bbDetail.p+"," + (bbDetail.h+bbDetail.p)  + ")")
+          .append("text")
+          .style("text-anchor", "end")
+          .attr({class:"label", dx:bbDetail.w+"px", dy:(2*bbDetail.p) +"px"});
+        
     // add y axis
     detailVis.append("g")
           .attr("class", "y axis")
-          .attr("transform", "translate("+ bbDetail.p +","+bbDetail.p+")");
+          .attr("transform", "translate("+(bbDetail.p+2*bbDetail.r)+","+bbDetail.p+")")
+          .append("text")
+          .style("text-anchor", "end")
+          .attr({class:"label", dy:(-bbDetail.p)+"px"})
+          .attr("transform", function(d) { return "rotate(-90)" });
+
 
     // add title
     detailVis.append("text")
-       .attr("fill", "teal")
-       .attr("dy", 10)
-       .attr("dx", 50);
+       .attr({class:"title",fill:"teal","text-anchor":"middle",
+              dx:(bbDetail.w/2+bbDetail.p)+"px",y:(bbDetail.p)+"px"});
 }
 
 // menu code
 var menu = d3.select("#menu");
 
 // add caption
-var caption = menu.append("h2")
-       .attr("id", "menu-caption");
+var caption = menu.append("h2").attr("id", "menu-caption");
 
 // caption attributes
 var captionText = [];
@@ -311,19 +401,8 @@ var form = menu.append("form");
 
 // tag categories
 var categories = [{id: "sh", name: "sexual health", children: ["cly", "syp", "hiv", "gon"]},
-                  {id: "sb", name: "social behavior", children: ["teen", "gdp", "pop"]},
+                  {id: "sb", name: "social behavior", children: ["teen", "gdp", "pop", "stateID"]},
                   {id: "porn", name: "pornography usage", children: ["creampie", "teen-tag"]}];
-
-// possible tags
-var tags = {"cly": "chlamydia",
-            "syp": "syphilis",
-            "hiv": "HIV",
-            "gon": "gonorrhea",
-            "teen": "teen pregnancy",
-            "gdp": "GDP",
-            "pop": "population density",
-            "creampie": "teen tag",
-            "teen-tag": "creampie tag"};
 
 // helper array to save on computations
 var tagsArray = [];
@@ -381,7 +460,7 @@ function updateForm(array) {
   if(captionText.length > 0) {
     text = "compare";
     captionText.forEach(function(d, i) {
-      text += " " + d.name;
+      text += " " + '<span class="factor">' + d.name + '</span>';
       // format punctuation and grammar
       if(i == captionText.length - 1 && captionText.length < 3) {
         text += " and..."
@@ -396,15 +475,15 @@ function updateForm(array) {
       }
     });
 
-    caption.text(text);
+    caption.html(text);
   }
 
   else if(currentCategory){
-    caption.text("show me " + currentCategory + " data on...");
+    caption.html("show me " + currentCategory + " data on...");
   }
 
   else {
-    caption.text("show me data from...");
+    caption.html("show me data from...");
   }
 
   // set radio button toggle for first selection
@@ -436,6 +515,18 @@ updateForm(categories);
 // sundial code
 
 function displaySundial(d) {
+  // hide tip
+  d3.select(".fa-arrow-down").style("display", "none");
+  d3.select("#tip > p").style("display", "none");
+
+  // toggle state selection
+  clickedState = (clickedState == d) ? null : d;
+
+  svg.selectAll("path")
+      .style("fill", function(e) {
+        return (clickedState == e) ? "#3B8686" : colors[e["properties"]["name"]];
+      });
+
   var points = [];
   var average = [];
 
@@ -456,7 +547,7 @@ function displaySundial(d) {
         return (i == 1) ? "#97d9d9" : "#00d9bd";
       },
       w: 400,
-      h: 350,
+      h: 400,
       labels: [d.properties.name, "National Average"]
     }
 
