@@ -35,7 +35,10 @@ var detailVis = d3.select("#detailVis").append("svg").attr({
     height:500,
 })
 
-tooltip = d3.select('#vis').append("div").attr({id:'tooltip'}).style({visibility:'hidden'});
+tooltip = d3.select('#vis').append("div").attr({id:'tooltip'}).style("position", "absolute")
+  .style("z-index", "10")
+  .style("visibility", "hidden")
+  .text("a simple tooltip");
 
 var canvas = d3.select("#vis").append("svg").attr({
     width: width + margin.left + margin.right,
@@ -77,7 +80,7 @@ function loadFactor(factor) {
 
 function loadStats() {
   // file names for each of the factors
-  var dataFiles = ["cly", "gon", "teen", "creampie", "teen-tag"];
+  var dataFiles = ["cly", "gon", "syp", "teen", "creampie", "teen-tag"];
 
   // iterate over all factors
   dataFiles.forEach(function(factor) {
@@ -133,6 +136,10 @@ function loadStats() {
   d3.select("input[value=\"teen-tag\"]").
     on("click", function() {
       loadFactor("teen-tag");
+    });
+  d3.select("input[value=\"syp\"]").
+    on("click", function() {
+      loadFactor("syp");
     });
 }
 
