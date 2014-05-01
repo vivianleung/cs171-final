@@ -104,33 +104,32 @@ function loadFactor(factor) {
   else {
     factors.loaded.push(factor);
 
+    // calculates RGB color value for datum based on selected factor(s)
+    var colorize = function(datum) {
 
-    function colorize(datum) {
+      var scaled_factors_sum = 0;
+      var scaled_factors = [];
 
-      // calculates scaled value of each factor selected
-      var RGB = {'r':0,'g':0,'b':0 }
+      // scaled value for the factor by factor's range
+      datum.forEach(function(raw_factor, i) {
+        scaled_factors.push((raw_factor - mins[factors.loaded[i]]) / ranges[factors.loaded[i]]);
+        scaled_factors_sum += scaled_factors[i];
+      })
 
-      // for each factor value
-      datum.forEach(function(factorVal, i) {
+      var RGB = {};
+      // for each RGB component, sum of [(scaled color value, by factor value) * factor weight in datum]
+      for (var c in colorRanges) {
+        var prima_color = 0;
+        scaled_factors.forEach(function(scaled_fact, i) {
+          prima_color += (colorRanges[c][i]["min"] - scaled_fact*colorRanges[c][i]["range"]) * scaled_fact/scaled_factors_sum;
+        })
+        RGB[c] = Math.round(prima_color);
+      }
 
-        // calculates scaled value
-        var scaledval = (factorVal - mins[factors.loaded[i]]) / ranges[factors.loaded[i]];
-
-        // for each RGB component, calculates scaled color value and adds it to existing val
-        for (var c in colorRanges) {
-          RGB[c] += colorRanges[c][i]["min"] - scaledval*colorRanges[c][i]["range"] ; 
-        }
-      });
-
-
-      // takes average of each RGB component 
-      for (var c in RGB) { RGB[c] = Math.round(RGB[c] / datum.length); }
       var color = "rgb("+RGB.r+","+RGB.g+","+RGB.b + ")";
       return color;
     }
     
-
-
     svg.selectAll("path")
       .style("fill", function(d) {
         var values = [];
