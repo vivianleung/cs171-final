@@ -39,6 +39,10 @@ text{
   font: 10px sans-serif;
 }
 
+.axis text.label {
+  font-weight: 400;
+  font-size: 12pt;
+}
 .axis line,
 .axis path {
   fill: none;

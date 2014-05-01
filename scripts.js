@@ -9,12 +9,21 @@ var margin = {
     left: -60
 };
 
+var bbVis = {
+    x: 250,
+    y: 10,
+    w: width,
+    h: 300,
+    p: 8
+};
+
 var bbDetail = {
     x: 200,
     y: 50,
     w: 360,
     h: 320,
-    p: 20
+    p: 20,
+    r: 5
 };
 
 var loadedGraph = false;
@@ -24,18 +33,13 @@ var height = 400 - margin.bottom - margin.top;
 var selected;
 var clickedState;
 
-var bbVis = {
-    x: 250,
-    y: 10,
-    w: width,
-    h: 300,
-    p: 8
-};
-
 var detailVis = d3.select("#detailVis").append("svg").attr({
-    width:400,
-    height:350,
-})
+    width:(bbDetail.w+5*bbDetail.p),
+    height:(bbDetail.h+5*bbDetail.p),
+    })
+    .append("g")
+    .attr("transform", "translate("+(2*bbDetail.p)+","+bbDetail.p+")");
+
 
 
 tooltip = d3.select('#vis').append("div").attr({id:'tooltip'}).style("position", "absolute")
@@ -100,7 +104,6 @@ function updateMap() {
           scaled_factors.push((raw_factor - mins[factors.loaded[i]]) / ranges[factors.loaded[i]]);
           scaled_factors_sum += scaled_factors[i];
         })
-        console.log(scaled_factors)
         var RGB = {};
         // for each RGB component, sum of [(scaled color value, by factor value) * factor weight in datum]
         for (var c in colorRanges) {
@@ -119,84 +122,88 @@ function updateMap() {
       }
     }
     
-    svg.selectAll("path")
-      .style("fill", function(d) {
+    // most recently selected factor
+    var factor;
 
-        // if no factors selected, then set colors to default
-        if (factors.loaded.length == 0){ colors[d["properties"]["name"]] = "#97d9d9" }
-        
-        // if at least 1 factor selected
-        else {
+    // removes old circles
+    detailVis.select("g.circles").remove();
 
-          // look for data
+    // if no factors selected
+    if (factors.loaded.length == 0) {
+      svg.selectAll("path")
+        .style("fill", function(d) {
+          colors[d["properties"]["name"]] = "#97d9d9";
+          return "#97d9d9";
+        })
+      .style("stroke", "white");
+      factor = ""; 
+
+    }
+    else {
+      // sets state color
+      svg.selectAll("path")
+        .style("fill", function(d) { 
           var values = [];
           factors.loaded.forEach(function(f) {
             if(d["properties"]["name"] in factors[f]) {
               values.push(factors[f][d["properties"]["name"]]["rate_per_pop"]);
             }
           })
+          colors[d["properties"]["name"]] = colorize(values);          
+          return colors[d["properties"]["name"]];
+        })
+        .style("stroke", "white");
 
-          // state has data
-          if (values.length > 0) { colors[d["properties"]["name"]] = colorize(values); }
-
-          // state has no data
-          else { colors[d["properties"]["name"]] = "grey"; }
-        }
-        return colors[d["properties"]["name"]];
-      })
-      .style("stroke", "white");
-
-
-    // UPDATE GRAPH
-
-    // update scales and axes
-    // xDetailScale.domain([mins[factor], parseInt(maxs[factor]) + 1]);
-    // yDetailScale.domain([maxs[factor],mins[factor]]);
-    // xDetailAxis.scale(xDetailScale);
-    // yDetailAxis.scale(yDetailScale);
-
-    // detailVis.select("g.x.axis").call(xDetailAxis)
-    //       .selectAll("text") 
-    //         .style("text-anchor", "end")
-    //         .attr("dx", "-.8em")
-    //         .attr("dy", ".15em")
-    //         .attr("transform", function(d) {
-    //             return "rotate(-65)" 
-    //             });
-
-    // detailVis.select("g.y.axis").call(yDetailAxis);
-
-
-
-    // // load data for selected factor
-    // var dataSet = [];
-    // Object.keys(factors[factor]).forEach(function(id) {
-
-    //   dataSet.push(factors[factor][id]);
-    // });
     
-    // // update title
-    // detailVis.select('text.title').text(factor);
+      // UPDATE GRAPH
 
-    // detailVis.selectAll("circle").remove();
-    // // REMOVE CIRCLES
+      // update scales and axes
+      factor = factors.loaded[factors.loaded.length-1];
+      xDetailScale.domain([mins[factor], maxs[factor] + 1]);
+      yDetailScale.domain([maxs[factor], 0]);
+      xDetailAxis.scale(xDetailScale);
+      yDetailAxis.scale(yDetailScale);
 
+      var xAxis = detailVis.select("g.x.axis")
 
-    // // add bars
-    // var bars = detailVis.append("g")
-    //    .selectAll("circle")
-    //    .data(dataSet)
-    //    .enter()
-    //    .append("circle")
-    //    .attr("class", "stateDot")
-    //    .attr("cx", function(d) {
-    //       return xDetailScale(d["rate_per_pop"]);
-    //    })
-    //    .attr("cy", function(d) {
-    //       return yDetailScale(d["rate_per_pop"]);
-    //    })
-    //    .attr("r", 5);
+      xAxis.call(xDetailAxis)
+          .selectAll("text:not(.label)") 
+          .style("text-anchor", "end")
+          .attr("dx", "-.8em").attr("dy", ".15em")
+          .attr("transform", function(d) { return "rotate(-65)" });
+
+      xAxis.select("text.label").text(factor)
+
+      detailVis.select("g.y.axis").call(yDetailAxis)
+        .select("text.label").text(factor);
+
+      // load data for selected factor
+      var dataSet = [];
+      Object.keys(factors[factor]).forEach(function(id) {
+        dataSet.push(factors[factor][id]);
+      });
+
+      // add bars
+      var bars = detailVis.append("g")
+         .attr("class","circles")
+         .attr("transform","translate("+bbDetail.p+","+bbDetail.p+")")
+         .selectAll("circle")
+         .data(dataSet)
+         .enter()
+         .append("circle")
+         .attr("class", "stateDot")
+         .attr("cx", function(d) {
+            return xDetailScale(d["rate_per_pop"]);
+         })
+         .attr("cy", function(d) {
+            return yDetailScale(d["rate_per_pop"]);
+         })
+         .attr("r", bbDetail.r);
   
+    }
+
+  // update title
+  detailVis.select('text.title').text(factor);
 }
 
 function loadStats() {
@@ -335,40 +342,41 @@ function movetip(d) {
 
 function createDetailVis(){
 
+    // scales and axes (to update with domains of user-selected factors)
     xDetailScale = d3.scale.linear().range([10, bbDetail.w]);
     yDetailScale = d3.scale.linear().range([10, bbDetail.h]);
-
-    xDetailAxis = d3.svg.axis()
-        .orient("bottom")
-        .ticks(5);
-
-    yDetailAxis = d3.svg.axis()
-        .orient("left")
-        .ticks(6);
+    xDetailAxis = d3.svg.axis().orient("bottom").ticks(5);
+    yDetailAxis = d3.svg.axis().orient("left").ticks(6);
 
     // add x axis
     detailVis.append("g")
           .attr("class", "x axis")
-          .attr("transform", "translate("+bbDetail.p/2+"," + (bbDetail.h+bbDetail.p)  + ")")
-
+          .attr("transform", "translate("+bbDetail.p+"," + (bbDetail.h+bbDetail.p)  + ")")
+          .append("text")
+          .style("text-anchor", "end")
+          .attr({class:"label", dx:bbDetail.w+"px", dy:(2*bbDetail.p) +"px"});
+        
     // add y axis
     detailVis.append("g")
           .attr("class", "y axis")
-          .attr("transform", "translate("+ bbDetail.p +","+bbDetail.p+")");
+          .attr("transform", "translate("+(bbDetail.p+2*bbDetail.r)+","+bbDetail.p+")")
+          .append("text")
+          .style("text-anchor", "end")
+          .attr({class:"label", dy:(-bbDetail.p)+"px"})
+          .attr("transform", function(d) { return "rotate(-90)" });
+
 
     // add title
     detailVis.append("text")
-       .attr("fill", "teal")
-       .attr("dy", 10)
-       .attr("dx", 50);
+       .attr({class:"title",fill:"teal","text-anchor":"middle",
+              dx:(bbDetail.w/2+bbDetail.p)+"px",y:(bbDetail.p)+"px"});
 }
 
 // menu code
 var menu = d3.select("#menu");
 
 // add caption
-var caption = menu.append("h2")
-       .attr("id", "menu-caption");
+var caption = menu.append("h2").attr("id", "menu-caption");
 
 // caption attributes
 var captionText = [];
