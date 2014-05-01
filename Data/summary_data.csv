@@ -1,8 +1,8 @@
 stat,factor,us_avg_rate,us_avg_cases
-chlamydia,sh,456.7,1422976
-gonorrhea,sh,107.5,321849
-syphillis,sh,5.0,15667
-HIV,sh,339.4,8700961
-density,sb,89.5,
-teenpreg,sb,29.4,10501548
+cly,sh,456.7,1422976
+gon,sh,107.5,321849
+syp,sh,5.0,15667
+hiv,sh,339.4,8700961
+pop,sb,89.5,
+teen,sb,29.4,10501548
 gdp,sb,"48,358.0",14119000
