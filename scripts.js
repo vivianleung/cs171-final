@@ -4,27 +4,27 @@
  */
 
 var margin = {
-    top: -200,
-    right: 50,
-    bottom: 50,
+    top: 20,
+    right: 40,
+    bottom: 0,
     left: 50
 };
 
 var bbDetail = {
-    x: 300,
-    y: 0,
-    w: 400,
-    h: 300
+    x: 200,
+    y: 50,
+    w: 360,
+    h: 320
 };
 
 var loadedGraph = false;
 
-var width = 960 - margin.left - margin.right;
-var height = 800 - margin.bottom - margin.top;
+var width = 860 - margin.left - margin.right;
+var height = 400 - margin.bottom - margin.top;
 var selected;
 
 var bbVis = {
-    x: 100,
+    x: 250,
     y: 10,
     w: width - 100,
     h: 300,
@@ -32,14 +32,13 @@ var bbVis = {
 };
 
 var detailVis = d3.select("#detailVis").append("svg").attr({
-    width:500,
-    height:500,
+    width:400,
+    height:350,
 })
 
 tooltip = d3.select('#vis').append("div").attr({id:'tooltip'}).style("position", "absolute")
   .style("z-index", "10")
-  .style("visibility", "hidden")
-  .text("a simple tooltip");
+  .style("visibility", "hidden");
 
 var canvas = d3.select("#vis").append("svg").attr({
     width: width + margin.left + margin.right,
@@ -52,7 +51,7 @@ var svg = canvas.append("g").attr({
     });
 
 
-var projection = d3.geo.albersUsa().translate([width / 2, height / 2]);//.precision(.1);
+var projection = d3.geo.albersUsa().translate([width / 2, height / 2]).scale(800);
 var path = d3.geo.path().projection(projection);
 
 var dataSet = {};
@@ -160,7 +159,7 @@ function loadStats() {
       // create color scale
       colorDomains[factor] = d3.scale.linear()
           .domain([min, max])
-          .range(["pink", "red"]);
+          .range(["#97d9d9", "#195c5c"]);
     });
   });
 }
@@ -184,7 +183,7 @@ function hover(d) {
 
   svg.selectAll("path")
       .style("fill", function(d) {
-        return (selected && d === selected) ? "orange" : colors[d["properties"]["name"]];
+        return (selected && d === selected) ? "#3B8686" : colors[d["properties"]["name"]];
       });
 
   movetip(d);
@@ -201,7 +200,7 @@ function movetip(d) {
     tooltip.html(tipHTML)
       .style({visibility: 'visible'})
       .style("left",(tXY[0]+bbVis.p)+'px')
-      .style("top", function() { return(tXY[1]+bbVis.x-bbVis.p)+'px';} ); 
+      .style("top", function() { return(tXY[1] + bbVis.x - bbVis.p)+'px';} ); 
   }
   else {
     tooltip.style({visibility: 'hidden'});
@@ -241,3 +240,149 @@ function createDetailVis(){
        .attr("dy", 10)
        .attr("dx", 50);
 }
+
+// menu code
+
+
+var menu = d3.select("#menu");
+
+// add caption
+var caption = menu.append("h2")
+       .attr("id", "menu-caption");
+
+// caption attributes
+var captionText = [];
+
+// add form
+var form = menu.append("form");
+
+// tag categories
+var categories = [{id: "sh", name: "sexual health", children: ["cly", "syp", "hiv", "gon"]},
+                  {id: "sb", name: "social behavior", children: ["teen", "gdp", "pop"]},
+                  {id: "porn", name: "pornography usage", children: ["creampie", "teen-tag"]}];
+
+// possible tags
+var tags = [{id: "cly", name: "chlamydia"},
+            {id: "syp", name: "syphilis"},
+            {id: "hiv", name: "HIV"},
+            {id: "gon", name: "gonorrhea"},
+            {id: "teen", name: "teen pregnancy"},
+            {id: "gdp", name: "GDP"},
+            {id: "pop", name: "population density"},
+            {id: "creampie", name: "teen tag"},
+            {id: "teen-tag", name: "creampie tag"}];
+
+var currentCategory = null;
+
+// update form with form's children
+function updateForm(array) {
+  // remove all (possible) nodes in form
+  form.remove();
+
+  // add form
+  form = menu.append("form");
+
+  // if already selected, add back button
+  if(captionText.length > 0 || currentCategory) {
+    var backButton = form.append("i");
+    backButton
+      .attr("class", "fa fa-arrow-left")
+      .on("click", function() {
+        // remove last tag
+        captionText.pop();
+        currentCategory = null;
+        updateForm(categories);
+      });
+  }
+
+  // generate buttons
+  buttons = form.selectAll("input")
+         .data(array)
+         .enter()
+         .append("input")
+         .attr("type", "radio")
+         .attr("id", function(d, i) {
+            return "radio" + (i + 1);
+         })
+         .attr("name", "radios")
+         .attr("value", function(d) {
+            return d.id;
+         });
+
+  // add labels
+  var labels = form.selectAll("input").each(function(d, i) {
+      var label = document.createElement("label");
+      label.setAttribute("for", "radio" + (i + 1));
+      label.innerHTML = array[i].name;
+      this.parentNode.insertBefore(label, this.nextSibling);
+  });
+
+  // update caption text
+  if(captionText.length > 0) {
+    text = "compare";
+    captionText.forEach(function(d, i) {
+      text += " " + d.name;
+      // format punctuation and grammar
+      if(i == captionText.length - 1 && captionText.length < 3) {
+        text += " and..."
+      }
+
+      else if(i < captionText.length - 1 && !(i == 1 && captionText.length == 3)){
+        text += ", ";
+      }
+
+      else if(i == 1 && captionText.length == 3) {
+        text += " and ";
+      }
+    });
+
+    caption.text(text);
+  }
+
+  else if(currentCategory){
+    caption.text("show me " + currentCategory + " data on...");
+  }
+
+  else {
+    caption.text("show me data from...");
+  }
+
+  // set radio button toggle for first selection
+  array.forEach(function(d, i) {
+    d3.select("input[value=\"" + d.id + "\"]").
+      on("click", function() {
+        // go into category
+        if(d.children) {
+          currentCategory = d.name;
+          updateForm(tags.filter(function(el, j) {
+            return (d.children.indexOf(el.id) > -1) && (captionText.indexOf(el) < 0);
+          }));
+        }
+
+        // add element to caption and return to categories
+        else {
+          currentCategory = null;
+          // add category to caption
+          captionText.push(d);
+          loadFactor(d.id);
+          updateForm(categories);
+        }
+      });
+  });
+}
+
+updateForm(categories);
+
+// sundial code
+
+function displaySundial(state) {
+  var points = [];
+  tags.forEach(function(d){
+    points.push({"axis": d.name, "value": 3});
+  });
+  
+
+  RadarChart.draw("#chart", [points]);
+}
+
+//displaySundial("hi");
