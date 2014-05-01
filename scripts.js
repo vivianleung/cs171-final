@@ -192,7 +192,7 @@ function hover(d) {
 
 function movetip(d) {
   if (selected) {
-    var tipHTML = d.properties.name;
+    var tipHTML = "<strong>" + d.properties.name + "</strong>";
     if (factors.loaded) {
       tipHTML += "<br/>"+factors.loaded[0]+": "+factors[factors.loaded[0]][d.properties.name].rate_per_pop; 
     }

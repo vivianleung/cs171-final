@@ -57,7 +57,7 @@ text{
   box-shadow: 4px 4px 10px rgba(0, 0, 0, 0.4);
   pointer-events: none;
 
-#tooltip br {
+#tooltip p {
         margin: 0;
         font-family: sans-serif;
         font-size: 16px;
