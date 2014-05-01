@@ -20,12 +20,18 @@ var RadarChart = {
         }
       }
     }
+    d3.select(id).select("svg").remove();
+    var g = d3.select(id).append("svg").attr("width", cfg.w).attr("height", cfg.h).append("g");
+    g.attr("transform", "translate(0, 50)");
+
+    // update height and width
+    cfg.w -= 50;
+    cfg.h -= 50;
+
     cfg.maxValue = Math.max(cfg.maxValue, d3.max(d, function(i){return d3.max(i.map(function(o){return o.value;}))}));
     var allAxis = (d[0].map(function(i, j){return i.axis}));
     var total = allAxis.length;
     var radius = cfg.factor*Math.min(cfg.w/2, cfg.h/2);
-    d3.select(id).select("svg").remove();
-    var g = d3.select(id).append("svg").attr("width", cfg.w).attr("height", cfg.h).append("g");
 
     var tooltip;
     function getPosition(i, range, factor, func){
@@ -156,19 +162,25 @@ var RadarChart = {
     tooltip = g.append('text').style('opacity', 0).style('font-family', 'sans-serif').style('font-size', '13px');
     
     // Added by Lucas Freitas
-    var label = g.append("text")
+    var label = d3.select("#detailVis").append("div")
                    .attr("id", "tooltip")
-                   .attr("fill", "teal")
-                   .attr("dy", 10)
-                   .attr("dx", 50)
+                   .attr("class", "stateLabel")
                    .style("visibility", "hidden");
+
+    var stateTitle = g.append("text")
+                   .attr("id", "stateTitle")
+                   .attr("dy", -20)
+                   .attr("dx", 175)
+                   .attr("text-anchor", "middle")
+                   .html(cfg.labels[0] + " at a glance");
 
     // Graph labels
     g.selectAll("polygon")
-        .on('mouseover', function (d, index){
-            console.log(d);
-            console.log(cfg.labels);
-            label.html(cfg.labels[index])
+        .on('mousemove', function (d, index){
+            var tXY = d3.mouse(d3.select("#detailVis")[0][0]);
+            label.style("left", (tXY[0] + 800) + "px");
+            label.style("top", (tXY[1] + 300) + "px");
+            label.html(cfg.labels[index]);
             label.style("visibility", "visible");
         })
         .on('mouseout', function(){
