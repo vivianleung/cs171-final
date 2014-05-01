@@ -58,6 +58,7 @@ var factors = {};
 var mins = {};
 var maxs = {};
 var tooltip;
+var xDetailAxis, xDetailAxis, yDetailAxis, yDetailScale;
 
 function loadFactor(factor) {
     svg.selectAll("path")
@@ -69,16 +70,61 @@ function loadFactor(factor) {
         }
       })
       .style("stroke", "white");
-    for (var k in factors) { 
-      factors[k].loaded = false;
-    }
-    factors[factor].loaded = true;
+
+    factors.loaded = [factor];
+    // for (var k in factors) { 
+    //   factors[k].loaded = false;
+    // }
+    // factors[factor].loaded = true;
+
+    // UPDATE GRAPH
+
+    // update scales and axes
+    xDetailScale.domain([mins["creampie"], parseInt(maxs["creampie"]) + 1]);
+    yDetailScale.domain([maxs[factor],mins[factor]]);
+    xDetailAxis.scale(xDetailScale);
+    yDetailAxis.scale(yDetailScale);
+
+    detailVis.select("g.x.axis").call(xDetailAxis)
+          .selectAll("text") 
+            .style("text-anchor", "end")
+            .attr("dx", "-.8em")
+            .attr("dy", ".15em")
+            .attr("transform", function(d) {
+                return "rotate(-65)" 
+                });
+
+    detailVis.select("g.y.axis").call(yDetailAxis);
+
+    // load data for selected factor
+    var dataSet = [];
+    Object.keys(factors[factor]).forEach(function(id) {
+      dataSet.push(factors[factor][id]);
+    });
+    
+    // add bars
+    var bars = detailVis.selectAll("circle")
+       .data(dataSet)
+       .enter()
+       .append("circle")
+       .attr("fill", "teal")
+       .attr("cx", function(d) {
+          console.log(factor, d["state"])
+          return xDetailScale(factors[factor][d["state"]]["rate_per_pop"]);
+       })
+       .attr("cy", function(d) {
+          return yDetailScale(d["rate_per_pop"]);
+       })
+       .attr("r", 5);
+
+    // update title
+    detailVis.select('text.title').text(factor);
+
 }
 
 function loadStats() {
   // file names for each of the factors
   var dataFiles = ["cly", "gon", "teen", "creampie", "teen-tag"];
-
   // iterate over all factors
   dataFiles.forEach(function(factor) {
     var filePath = "../data/" + factor + "_data.csv";
@@ -115,7 +161,6 @@ function loadStats() {
   // set radio button toggle
   d3.select("input[value=\"cly\"]").
     on("click", function() {
-      createDetailVis("cly");
       loadFactor("cly");
     });
   d3.select("input[value=\"gon\"]").
@@ -146,6 +191,7 @@ d3.json("../data/us-named.json", function(error, data) {
       .on("mouseout", hover);
 
     loadStats();
+    createDetailVis();
 
 });
 
@@ -162,11 +208,9 @@ function hover(d) {
 
 function movetip(d) {
   if (selected) {
-    var tipHTML = d.properties.name; 
-    for (var k in factors) {
-      if (factors[k].loaded) { 
-        tipHTML += "<br/>"+k+": "+factors[k][d.properties.name].rate_per_pop;
-      }
+    var tipHTML = d.properties.name;
+    if (factors.loaded) {
+      tipHTML += "<br/>"+factors.loaded[0]+": "+factors[factors.loaded[0]][d.properties.name].rate_per_pop; 
     }
 
     var tXY = d3.mouse(d3.select('#vis')[0][0]);
@@ -181,122 +225,35 @@ function movetip(d) {
 
 }
 
-function createDetailVis(factor){
-    var xDetailAxis, xDetailAxis, yDetailAxis, yDetailScale;
+function createDetailVis(){
 
-    xDetailScale = d3.scale.linear().domain([mins["creampie"], parseInt(maxs["creampie"]) + 1]).range([10, bbDetail.w]);
+    xDetailScale = d3.scale.linear().range([10, bbDetail.w]);
     
     detailVis.append("rect");
 
-    yDetailScale = d3.scale.linear().domain([maxs[factor],mins[factor]]).range([10, bbDetail.h]);
+    yDetailScale = d3.scale.linear().range([10, bbDetail.h]);
 
     xDetailAxis = d3.svg.axis()
-        .scale(xDetailScale)
         .orient("bottom")
         .ticks(5);
 
     yDetailAxis = d3.svg.axis()
-        .scale(yDetailScale)
         .orient("right")
         .ticks(6);
 
     // add x axis
     detailVis.append("g")
           .attr("class", "x axis")
-          .attr("transform", "translate(0," + bbDetail.h + ")")
-          .call(xDetailAxis)
-          .selectAll("text") 
-            .style("text-anchor", "end")
-            .attr("dx", "-.8em")
-            .attr("dy", ".15em")
-            .attr("transform", function(d) {
-                return "rotate(-65)" 
-                });
+          .attr("transform", "translate(0," + bbDetail.h + ")");
 
     // add y axis
     detailVis.append("g")
           .attr("class", "y axis")
-          .attr("transform", "translate(10,0)")
-          .call(yDetailAxis);
-
-    var dataSet = []
-    Object.keys(factors[factor]).forEach(function(id) {
-      dataSet.push(factors[factor][id]);
-    });
-
-    // add bars
-    var bars = detailVis.selectAll("circle")
-       .data(dataSet)
-       .enter()
-       .append("circle")
-       .attr("fill", "teal")
-       .attr("cx", function(d) {
-          return xDetailScale(factors["creampie"][d["state"]]["rate_per_pop"]);
-       })
-       .attr("cy", function(d) {
-          return yDetailScale(d["rate_per_pop"]);
-       })
-       .attr("r", 5);
+          .attr("transform", "translate(10,0)");
 
     // add title
     detailVis.append("text")
-       .text(factor)
        .attr("fill", "teal")
        .attr("dy", 10)
-       .attr("dx", 50)
-
-
-
-    loadedGraph = true;
-}
-
-function updateDetailVis(d){
-    // data by hour
-    hours = {};
-    for(var month = 0; month < 12; month++) {
-        if(dataSet[month][d["USAF"]]) {
-            for(hour in dataSet[month][d["USAF"]]["hourly"]){
-                if(!hours[hour]) {
-                    hours[hour] = dataSet[month][d["USAF"]]["hourly"][hour];
-                }
-                else {
-                    hours[hour] += dataSet[month][d["USAF"]]["hourly"][hour];
-                }
-            }
-        }
-    }
-
-    hoursArray = [];
-    for(var hour = 0; hour < 24; hour++) {
-        if(hours[hour])
-            hoursArray.push(hours[hour])
-        else
-            hoursArray.push(0);
-    }
-
-    // find min and max
-    var min;
-    var max;
-
-    Object.keys(hours).forEach(function(id) {
-        if(!min || hours[id] < min)
-            min = hours[id]
-        if(!max || hours[id] > max)
-            max = hours[id];
-    });
-
-    yDetailScale = d3.scale.linear().domain([max,min]).range([0, bbDetail.h]);
-
-    // add bars
-    var bars = detailVis.selectAll("rect")
-       .attr("x", function(d,i) {
-            return 60 + i * bbDetail.w / 24;
-       })
-       .attr("y", function(d,i) {
-            return 30 + bbDetail.h - yDetailScale(max - hoursArray[i]);
-       })
-       .attr("width", 5)
-       .attr("height", function(d,i) {
-            return yDetailScale(max - hoursArray[i]);
-       });
+       .attr("dx", 50);
 }
