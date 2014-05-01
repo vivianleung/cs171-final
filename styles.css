@@ -29,9 +29,10 @@ text{
   shape-rendering: crispEdges;
 }
 
-.station{
-  fill:lightgrey;
+.stateDot{
+  fill:teal;
   opacity: .7;
+  z-index: 100
 }
 .hasData{
   fill:teal;
