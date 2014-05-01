@@ -58,9 +58,40 @@ var path = d3.geo.path().projection(projection);
 
 var colors = {};
 var colorDomains = {};
+
+// each object in each array of R, G, and B represent corresponding components
+// of the blue (index 0) and red (index 1) scales
+
+var colorRanges = {
+  'r': [ {'min':160, 'range':141}, {'min':255, 'range':156} ], 
+  'g': [ {'min':218, 'range':126}, {'min':213, 'range':121}   ],
+  'b': [ {'min':242, 'range':150}, {'min':177, 'range':135}  ],
+}
+
+// var colorRanges = {
+//   'r': [ {'min':160, 'range':141}, {'min':240, 'range':58} ], 
+//   'g': [ {'min':218, 'range':126}, {'min':150, 'range':150}   ],
+//   'b': [ {'min':242, 'range':150}, {'min':165, 'range':140}  ],
+// }
+
+// var colorRanges = {
+//   'r': [ {'min':160, 'max':19}, {'min':240, 'max':182} ], 
+//   'g': [ {'min':218, 'max':92}, {'min':150, 'max':0}   ],
+//   'b': [ {'min':242, 'max':92}, {'min':165, 'max':30}  ],
+// }
+
+  // {'r':{'min':160, 'max':19}, 'g':{'min':218, 'max':92}, 'b':{'min':242, 'max':92}},
+  // {'r':{'min':240, 'max':182}, 'g':{'min':150, 'max':0}, 'b':{'min':165, 'max':30}}
+
+
+// colorRanges.forEach(function(color) {
+//   for (var c in color) { c['diff'] = c.min - c.max; }
+// });
+
 var factors = {};
 var mins = {};
 var maxs = {};
+var ranges = {};
 var averages = {};
 var tooltip;
 var xDetailAxis, xDetailAxis, yDetailAxis, yDetailScale;
@@ -71,13 +102,48 @@ function loadFactor(factor) {
     alert("Please de-select an option first!");
   }
   else {
+<<<<<<< HEAD
+=======
+    factors.loaded.push(factor);
+
+    // calculates RGB color value for datum based on selected factor(s)
+    var colorize = function(datum) {
+
+      var scaled_factors_sum = 0;
+      var scaled_factors = [];
+
+      // scaled value for the factor by factor's range
+      datum.forEach(function(raw_factor, i) {
+        scaled_factors.push((raw_factor - mins[factors.loaded[i]]) / ranges[factors.loaded[i]]);
+        scaled_factors_sum += scaled_factors[i];
+      })
+
+      var RGB = {};
+      // for each RGB component, sum of [(scaled color value, by factor value) * factor weight in datum]
+      for (var c in colorRanges) {
+        var prima_color = 0;
+        scaled_factors.forEach(function(scaled_fact, i) {
+          prima_color += (colorRanges[c][i]["min"] - scaled_fact*colorRanges[c][i]["range"]) * scaled_fact/scaled_factors_sum;
+        })
+        RGB[c] = Math.round(prima_color);
+      }
+
+      var color = "rgb("+RGB.r+","+RGB.g+","+RGB.b + ")";
+      return color;
+    }
+    
+>>>>>>> b992f0d5978823eff7be3e7ce12acfb7223b2a62
     svg.selectAll("path")
       .style("fill", function(d) {
-        if(d["properties"]["name"] in factors[factor]) {
-          // save most recent color
-          colors[d["properties"]["name"]] = colorDomains[factor](factors[factor][d["properties"]["name"]]["rate_per_pop"]);
-          return colors[d["properties"]["name"]];
-        }
+        var values = [];
+        factors.loaded.forEach(function(f) {
+          if(d["properties"]["name"] in factors[f]) {
+            values.push(factors[f][d["properties"]["name"]]["rate_per_pop"]);
+          }
+        })
+        console.log(values)
+        colors[d["properties"]["name"]] = colorize(values);
+        return colors[d["properties"]["name"]];
       })
       .style("stroke", "white");
 
@@ -132,7 +198,6 @@ function loadFactor(factor) {
           return yDetailScale(d["rate_per_pop"]);
        })
        .attr("r", 5);
-    factors.loaded.push(factor);
   }
 }
 
@@ -169,12 +234,12 @@ function loadStats() {
       // save min and max
       mins[factor] = min;
       maxs[factor] = max;
+      ranges[factor] = max - min;
       averages[factor] = average/(Object.keys(data).length);
 
       // create color scale
       colorDomains[factor] = d3.scale.linear()
-          .domain([min, max])
-          .range(["#97d9d9", "#195c5c"]);
+          .domain([min, max]);
     });
   });
 
@@ -184,10 +249,14 @@ function loadStats() {
     var header_len = headers.length;
     var time_formatter = d3.time.format("%H:%M:%S");
 
+    factors["stateID"] = {};  
+
+
     factors["porn_avg_time"] = {};
     var time_min, time_max;
     var avg_times = data.shift();
     avg_times.splice(1).forEach(function(t,i) {
+      factors["stateID"][headers[i+1]] = {"state": headers[i+1], "rate_per_pop": i};
       factors["porn_avg_time"][headers[i+1]] = {"state": headers[i+1], "rate_per_pop": time_formatter.parse(t)};
       if (!time_min || time_min > time_formatter.parse(t)) { time_min = time_formatter.parse(t);}
       if (!time_max || time_max < time_formatter.parse(t)) { time_max = time_formatter.parse(t); }
@@ -195,6 +264,10 @@ function loadStats() {
 
     mins["porn_avg_time"] = time_min;
     maxs["porn_avg_time"] = time_max;
+    ranges["porn_avg_time"] = time_max - time_min;
+    mins["stateID"] = 1;
+    maxs["stateID"] = 51;
+    ranges["stateID"] = 50;
 
     data.forEach(function(factor) {
       var factor_name = "porn_"+factor[0];
@@ -212,7 +285,7 @@ function loadStats() {
       }
       mins[factor_name] = min;
       maxs[factor_name] = max;
-
+      ranges[factor_name] = max - min;
     })
   })
 
@@ -310,7 +383,7 @@ var form = menu.append("form");
 
 // tag categories
 var categories = [{id: "sh", name: "sexual health", children: ["cly", "syp", "hiv", "gon"]},
-                  {id: "sb", name: "social behavior", children: ["teen", "gdp", "pop"]},
+                  {id: "sb", name: "social behavior", children: ["teen", "gdp", "pop", "stateID"]},
                   {id: "porn", name: "pornography usage", children: ["creampie", "teen-tag"]}];
 
 // possible tags
@@ -322,6 +395,7 @@ var tags = {"cly": "chlamydia",
             "gdp": "GDP",
             "pop": "population density",
             "creampie": "teen tag",
+            "stateID": "state index",
             "teen-tag": "creampie tag"};
 
 // helper array to save on computations
