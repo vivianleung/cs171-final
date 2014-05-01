@@ -71,6 +71,7 @@ h1 {
   line-height: 0;
   text-align: center;
   margin-top: 60px;
+  padding-bottom: 20px;
   text-transform: uppercase;
   color: teal;
   font-family: Roboto;
@@ -80,7 +81,6 @@ h1 {
 form {
   text-align: center;
   text-transform: uppercase;
-  padding-top: 20px;
 }
 
 /*
@@ -140,4 +140,25 @@ input[type=radio]:checked + label {
   background-image: none;
   outline: 0;
   background-color:#bababa;
+}
+
+#menu {
+  margin: 0 auto;
+  width: 800px;
+}
+
+h2#menu-caption {
+  margin-top: 20px;
+  text-align: center;
+  text-transform: uppercase;
+  color: teal;
+  font-family: Roboto;
+  font-weight: 100;
+}
+
+i.fa-arrow-left {
+  top: 5px;
+  position: relative;
+  font-size: 30px;
+  padding-right: 20px;
 }

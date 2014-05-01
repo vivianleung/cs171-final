@@ -1,5 +1,6 @@
 /**
- * Created by hen on 3/8/14.
+ * CS171 Final Project - What does SEX look like?
+ * Lucas Freitas, Vivian Leung, Charlie Lovett
  */
 
 var margin = {
@@ -162,32 +163,6 @@ function loadStats() {
           .range(["pink", "red"]);
     });
   });
-
-  // set radio button toggle
-  d3.select("input[value=\"cly\"]").
-    on("click", function() {
-      loadFactor("cly");
-    });
-  d3.select("input[value=\"gon\"]").
-    on("click", function() {
-      loadFactor("gon");
-    });
-  d3.select("input[value=\"teen\"]").
-    on("click", function() {
-      loadFactor("teen");
-    });
-  d3.select("input[value=\"creampie\"]").
-    on("click", function() {
-      loadFactor("creampie");
-    });
-  d3.select("input[value=\"teen-tag\"]").
-    on("click", function() {
-      loadFactor("teen-tag");
-    });
-  d3.select("input[value=\"syp\"]").
-    on("click", function() {
-      loadFactor("syp");
-    });
 }
 
 
