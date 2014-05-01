@@ -102,8 +102,6 @@ function loadFactor(factor) {
     alert("Please de-select an option first!");
   }
   else {
-<<<<<<< HEAD
-=======
     factors.loaded.push(factor);
 
     // calculates RGB color value for datum based on selected factor(s)
@@ -132,7 +130,6 @@ function loadFactor(factor) {
       return color;
     }
     
->>>>>>> b992f0d5978823eff7be3e7ce12acfb7223b2a62
     svg.selectAll("path")
       .style("fill", function(d) {
         var values = [];
@@ -201,6 +198,30 @@ function loadFactor(factor) {
   }
 }
 
+// possible tags
+var tags = {"cly": "chlamydia",
+            "syp": "syphilis",
+            "hiv": "HIV",
+            "gon": "gonorrhea",
+            "teen": "teen pregnancy",
+            "gdp": "GDP",
+            "pop": "population density",
+            "creampie": "teen tag",
+            "stateID": "state index",
+            "teen-tag": "creampie tag"};
+
+// possible tags
+var scales = {"cly": {scale: 100000, unit: "people"},
+              "syp": {scale: 100000, unit: "people"},
+              "hiv": {scale: 100000, unit: "people"},
+              "gon": {scale: 100000, unit: "people"},
+              "teen": {scale: 1000, unit: "teenage girls"},
+              "gdp": {scale: null, unit: "billions"},
+              "pop": {scale: null, unit: "millions"},
+              "creampie": {scale: 3, "teen tag", unit: },
+              "stateID": {scale: 3, "state index", unit: },
+              "teen-tag": {scale: 3, "creampie tag"};
+
 function loadStats() {
   // file names for each of the factors
 
@@ -249,14 +270,10 @@ function loadStats() {
     var header_len = headers.length;
     var time_formatter = d3.time.format("%H:%M:%S");
 
-    factors["stateID"] = {};  
-
-
     factors["porn_avg_time"] = {};
     var time_min, time_max;
     var avg_times = data.shift();
     avg_times.splice(1).forEach(function(t,i) {
-      factors["stateID"][headers[i+1]] = {"state": headers[i+1], "rate_per_pop": i};
       factors["porn_avg_time"][headers[i+1]] = {"state": headers[i+1], "rate_per_pop": time_formatter.parse(t)};
       if (!time_min || time_min > time_formatter.parse(t)) { time_min = time_formatter.parse(t);}
       if (!time_max || time_max < time_formatter.parse(t)) { time_max = time_formatter.parse(t); }
@@ -265,9 +282,6 @@ function loadStats() {
     mins["porn_avg_time"] = time_min;
     maxs["porn_avg_time"] = time_max;
     ranges["porn_avg_time"] = time_max - time_min;
-    mins["stateID"] = 1;
-    maxs["stateID"] = 51;
-    ranges["stateID"] = 50;
 
     data.forEach(function(factor) {
       var factor_name = "porn_"+factor[0];
@@ -321,7 +335,7 @@ function movetip(d) {
     var tipHTML = d.properties.name;
     if (factors.loaded.length > 0) {
       factors.loaded.forEach(function(selector){
-        tipHTML += "<br/>"+selector+": "+factors[selector][d.properties.name].rate_per_pop; 
+        tipHTML += "<br/>"+tags[selector]+": "+factors[selector][d.properties.name].rate_per_pop; 
 
       })
     }
@@ -329,8 +343,8 @@ function movetip(d) {
     var tXY = d3.mouse(d3.select('#vis')[0][0]);
     tooltip.html(tipHTML)
       .style({visibility: 'visible'})
-      .style("left",(tXY[0]+bbVis.p)+'px')
-      .style("top", function() { return(tXY[1] + bbVis.x - bbVis.p)+'px';} ); 
+      .style("left",(tXY[0]+bbVis.p+80)+'px')
+      .style("top", function() { return(tXY[1] + bbVis.x - bbVis.p - 5)+'px';} ); 
   }
   else {
     tooltip.style({visibility: 'hidden'});
@@ -385,18 +399,6 @@ var form = menu.append("form");
 var categories = [{id: "sh", name: "sexual health", children: ["cly", "syp", "hiv", "gon"]},
                   {id: "sb", name: "social behavior", children: ["teen", "gdp", "pop", "stateID"]},
                   {id: "porn", name: "pornography usage", children: ["creampie", "teen-tag"]}];
-
-// possible tags
-var tags = {"cly": "chlamydia",
-            "syp": "syphilis",
-            "hiv": "HIV",
-            "gon": "gonorrhea",
-            "teen": "teen pregnancy",
-            "gdp": "GDP",
-            "pop": "population density",
-            "creampie": "teen tag",
-            "stateID": "state index",
-            "teen-tag": "creampie tag"};
 
 // helper array to save on computations
 var tagsArray = [];
