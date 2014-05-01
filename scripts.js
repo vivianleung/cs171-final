@@ -57,6 +57,7 @@ var projection = d3.geo.albersUsa().translate([width / 2, height / 2]).scale(800
 var path = d3.geo.path().projection(projection);
 
 var colors = {};
+var colorDomains = {};
 
 // each object in each array of R, G, and B represent corresponding components
 // of the blue (index 0) and red (index 1) scales
@@ -66,6 +67,26 @@ var colorRanges = {
   'g': [ {'min':218, 'range':126}, {'min':213, 'range':121}   ],
   'b': [ {'min':242, 'range':150}, {'min':177, 'range':135}  ],
 }
+
+// var colorRanges = {
+//   'r': [ {'min':160, 'range':141}, {'min':240, 'range':58} ], 
+//   'g': [ {'min':218, 'range':126}, {'min':150, 'range':150}   ],
+//   'b': [ {'min':242, 'range':150}, {'min':165, 'range':140}  ],
+// }
+
+// var colorRanges = {
+//   'r': [ {'min':160, 'max':19}, {'min':240, 'max':182} ], 
+//   'g': [ {'min':218, 'max':92}, {'min':150, 'max':0}   ],
+//   'b': [ {'min':242, 'max':92}, {'min':165, 'max':30}  ],
+// }
+
+  // {'r':{'min':160, 'max':19}, 'g':{'min':218, 'max':92}, 'b':{'min':242, 'max':92}},
+  // {'r':{'min':240, 'max':182}, 'g':{'min':150, 'max':0}, 'b':{'min':165, 'max':30}}
+
+
+// colorRanges.forEach(function(color) {
+//   for (var c in color) { c['diff'] = c.min - c.max; }
+// });
 
 var factors = {};
 var mins = {};
@@ -77,126 +98,104 @@ var xDetailAxis, xDetailAxis, yDetailAxis, yDetailScale;
 
 function loadFactor(factor) {
 
-  if (factors.loaded.length >= 3) {
+  if (factors.loaded.length == 3) {
     alert("Please de-select an option first!");
   }
   else {
     factors.loaded.push(factor);
-    updateMap();
-  }
-}
 
-function updateMap() {
     // calculates RGB color value for datum based on selected factor(s)
     var colorize = function(datum) {
 
-      if (datum.length == 0) { return "grey"; }
-      else {
-        var scaled_factors_sum = 0;
-        var scaled_factors = [];
+      var scaled_factors_sum = 0;
+      var scaled_factors = [];
 
-        // scaled value for the factor by factor's range
-        datum.forEach(function(raw_factor, i) {
-          scaled_factors.push((raw_factor - mins[factors.loaded[i]]) / ranges[factors.loaded[i]]);
-          scaled_factors_sum += scaled_factors[i];
+      // scaled value for the factor by factor's range
+      datum.forEach(function(raw_factor, i) {
+        scaled_factors.push((raw_factor - mins[factors.loaded[i]]) / ranges[factors.loaded[i]]);
+        scaled_factors_sum += scaled_factors[i];
+      })
+
+      var RGB = {};
+      // for each RGB component, sum of [(scaled color value, by factor value) * factor weight in datum]
+      for (var c in colorRanges) {
+        var prima_color = 0;
+        scaled_factors.forEach(function(scaled_fact, i) {
+          prima_color += (colorRanges[c][i]["min"] - scaled_fact*colorRanges[c][i]["range"]) * scaled_fact/scaled_factors_sum;
         })
-        console.log(scaled_factors)
-        var RGB = {};
-        // for each RGB component, sum of [(scaled color value, by factor value) * factor weight in datum]
-        for (var c in colorRanges) {
-          var prima_color = 0;          
-          scaled_factors.forEach(function(scaled_fact, i) {
-            var factor_ratio; 
-            if (scaled_factors_sum == 0) { factor_ratio = 1/scaled_factors.length }
-            else { factor_ratio = scaled_fact/scaled_factors_sum; }
-            // factor ratio scaling to weigh a state's factor values, i.e. to reflect whether there is correlation between factors
-            prima_color += (colorRanges[c][i]["min"] - scaled_fact*colorRanges[c][i]["range"]) * factor_ratio;
-          })
-          RGB[c] = Math.round(prima_color);
-        }
-
-        return "rgb("+RGB.r+","+RGB.g+","+RGB.b + ")";
+        RGB[c] = Math.round(prima_color);
       }
+
+      var color = "rgb("+RGB.r+","+RGB.g+","+RGB.b + ")";
+      return color;
     }
     
     svg.selectAll("path")
       .style("fill", function(d) {
-
-        // if no factors selected, then set colors to default
-        if (factors.loaded.length == 0){ colors[d["properties"]["name"]] = "#97d9d9" }
-        
-        // if at least 1 factor selected
-        else {
-
-          // look for data
-          var values = [];
-          factors.loaded.forEach(function(f) {
-            if(d["properties"]["name"] in factors[f]) {
-              values.push(factors[f][d["properties"]["name"]]["rate_per_pop"]);
-            }
-          })
-
-          // state has data
-          if (values.length > 0) { colors[d["properties"]["name"]] = colorize(values); }
-
-          // state has no data
-          else { colors[d["properties"]["name"]] = "grey"; }
-        }
+        var values = [];
+        factors.loaded.forEach(function(f) {
+          if(d["properties"]["name"] in factors[f]) {
+            values.push(factors[f][d["properties"]["name"]]["rate_per_pop"]);
+          }
+        })
+        console.log(values)
+        colors[d["properties"]["name"]] = colorize(values);
         return colors[d["properties"]["name"]];
       })
       .style("stroke", "white");
 
 
+
     // UPDATE GRAPH
 
     // update scales and axes
-    // xDetailScale.domain([mins[factor], parseInt(maxs[factor]) + 1]);
-    // yDetailScale.domain([maxs[factor],mins[factor]]);
-    // xDetailAxis.scale(xDetailScale);
-    // yDetailAxis.scale(yDetailScale);
+    xDetailScale.domain([mins[factor], parseInt(maxs[factor]) + 1]);
+    yDetailScale.domain([maxs[factor],mins[factor]]);
+    xDetailAxis.scale(xDetailScale);
+    yDetailAxis.scale(yDetailScale);
 
-    // detailVis.select("g.x.axis").call(xDetailAxis)
-    //       .selectAll("text") 
-    //         .style("text-anchor", "end")
-    //         .attr("dx", "-.8em")
-    //         .attr("dy", ".15em")
-    //         .attr("transform", function(d) {
-    //             return "rotate(-65)" 
-    //             });
+    detailVis.select("g.x.axis").call(xDetailAxis)
+          .selectAll("text") 
+            .style("text-anchor", "end")
+            .attr("dx", "-.8em")
+            .attr("dy", ".15em")
+            .attr("transform", function(d) {
+                return "rotate(-65)" 
+                });
 
-    // detailVis.select("g.y.axis").call(yDetailAxis);
+    detailVis.select("g.y.axis").call(yDetailAxis);
 
 
 
-    // // load data for selected factor
-    // var dataSet = [];
-    // Object.keys(factors[factor]).forEach(function(id) {
+    // load data for selected factor
+    var dataSet = [];
+    Object.keys(factors[factor]).forEach(function(id) {
 
-    //   dataSet.push(factors[factor][id]);
-    // });
+      dataSet.push(factors[factor][id]);
+    });
     
-    // // update title
-    // detailVis.select('text.title').text(factor);
+    // update title
+    detailVis.select('text.title').text(factor);
 
-    // detailVis.selectAll("circle").remove();
-    // // REMOVE CIRCLES
+    detailVis.selectAll("circle").remove();
+    // REMOVE CIRCLES
 
 
-    // // add bars
-    // var bars = detailVis.append("g")
-    //    .selectAll("circle")
-    //    .data(dataSet)
-    //    .enter()
-    //    .append("circle")
-    //    .attr("class", "stateDot")
-    //    .attr("cx", function(d) {
-    //       return xDetailScale(d["rate_per_pop"]);
-    //    })
-    //    .attr("cy", function(d) {
-    //       return yDetailScale(d["rate_per_pop"]);
-    //    })
-    //    .attr("r", 5);
-  
+    // add bars
+    var bars = detailVis.append("g")
+       .selectAll("circle")
+       .data(dataSet)
+       .enter()
+       .append("circle")
+       .attr("class", "stateDot")
+       .attr("cx", function(d) {
+          return xDetailScale(d["rate_per_pop"]);
+       })
+       .attr("cy", function(d) {
+          return yDetailScale(d["rate_per_pop"]);
+       })
+       .attr("r", 5);
+  }
 }
 
 // possible tags
@@ -219,9 +218,8 @@ var scales = {"cly": {scale: 100000, unit: "people"},
               "teen": {scale: 1000, unit: "teenage girls"},
               "gdp": {scale: null, unit: "billions"},
               "pop": {scale: null, unit: "millions"},
-              "creampie": {scale: 3, "teen tag", unit: },
-              "stateID": {scale: 3, "state index", unit: },
-              "teen-tag": {scale: 3, "creampie tag"};
+              "teen-tag": {scale: 3, unit: "top 3"},
+              "creampie": {scale: 3, unit: "top 3"}};
 
 function loadStats() {
   // file names for each of the factors
@@ -259,6 +257,9 @@ function loadStats() {
       ranges[factor] = max - min;
       averages[factor] = average/(Object.keys(data).length);
 
+      // create color scale
+      colorDomains[factor] = d3.scale.linear()
+          .domain([min, max]);
     });
   });
 
@@ -424,8 +425,6 @@ function updateForm(array) {
         // remove last tag
         captionText.pop();
         currentCategory = null;
-        factors.loaded.pop();
-        updateMap();
         updateForm(categories);
       });
   }
@@ -497,7 +496,6 @@ function updateForm(array) {
         // add element to caption and return to categories
         else {
           currentCategory = null;
-
           // add category to caption
           captionText.push(d);
           loadFactor(d.id);
