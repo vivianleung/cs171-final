@@ -190,11 +190,13 @@ function loadStats() {
       factors[factor_name] = {};
       var min, max;
       for (var st=1; st<header_len; st++ ) {
-        var rank = 0;
+        var rank = 4;
         if (factor[st]) { rank = parseInt(factor[st]);}
         factors[factor_name][headers[st]] = {"state": headers[st], "rate_per_pop": rank}
-        if (!min || min > rank) { min = rank; }
-        if (!max || max < rank) { max = rank; }
+
+        // min and max are reversed to reflect the 
+        if (!min || min < rank) { min = rank; }
+        if (!max || max > rank) { max = rank; }
         
       }
       mins[factor_name] = min;
@@ -282,8 +284,6 @@ function movetip(d) {
 function createDetailVis(){
 
     xDetailScale = d3.scale.linear().range([10, bbDetail.w]);
-    
-
     yDetailScale = d3.scale.linear().range([10, bbDetail.h]);
 
     xDetailAxis = d3.svg.axis()
