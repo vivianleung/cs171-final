@@ -258,6 +258,7 @@ i.fa-arrow-down {
   text-align: center;
   border-radius: 10px;
   padding-bottom: 20px;
+  border: 1px solid #00d9bd;
 }
 
 #stateTitle {
