@@ -6,19 +6,23 @@
       <link href="//netdna.bootstrapcdn.com/font-awesome/4.0.3/css/font-awesome.css" rel="stylesheet">
       <link href='http://fonts.googleapis.com/css?family=Roboto:400,300,100,700' rel='stylesheet' type='text/css'/>
 
-      <!-- D3, Jquery, Styles -->
+      <!-- D3, Jquery, Radar Chart, Styles -->
       <script src="http://d3js.org/d3.v3.min.js"></script>
       <script src="http://d3js.org/topojson.v1.min.js"></script>
-      <script src="../libs/jquery-1.11.0.min.js"></script>
+      <script src="js/jquery-1.11.0.min.js"></script>
+      <script src="js/radar-chart.js"></script>
       <link rel='stylesheet' type='text/css' href='styles.css'/>
   </head>
 
 
   <body>
-    <h1>What does SEX look like?</h1>
+    <div id="top"></div>
+    <div id="sub-top"></div>
+    <h1>What does <span class="detail">SEX</span> look like?</h1>
+    <h4>A visualization by Lucas Freitas,<br/>Vivian Leung, and Charlie Lovett</h4>
     <div id="menu"></div>
-    
-    <script src="menu.js"></script>
+    <div id="chart" style='float:left'></div>
+  </div>
     <table>
       <tr>
         <td>

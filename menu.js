@@ -16,20 +16,20 @@ var captionText = [];
 var form = menu.append("form");
 
 // tag categories
-var categories = [{id: "sh", name: "Sexual Health", children: ["cly", "syp", "hiv", "gon"]},
-                  {id: "sb", name: "Social Behavior", children: ["teen", "gdp", "pop"]},
-                  {id: "porn", name: "Pornography Usage", children: ["creampie", "teen-tag"]}];
+var categories = [{id: "sh", name: "sexual health", children: ["cly", "syp", "hiv", "gon"]},
+                  {id: "sb", name: "social behavior", children: ["teen", "gdp", "pop"]},
+                  {id: "porn", name: "pornography usage", children: ["creampie", "teen-tag"]}];
 
 // possible tags
-var tags = [{id: "cly", name: "Chlamydia"},
-            {id: "syp", name: "Syphilis"},
+var tags = [{id: "cly", name: "chlamydia"},
+            {id: "syp", name: "syphilis"},
             {id: "hiv", name: "HIV"},
-            {id: "gon", name: "Gonorrhea"},
-            {id: "teen", name: "Teen Pregnancy"},
+            {id: "gon", name: "gonorrhea"},
+            {id: "teen", name: "teen pregnancy"},
             {id: "gdp", name: "GDP"},
-            {id: "pop", name: "Population Density"},
-            {id: "creampie", name: "Teen Tag"},
-            {id: "teen-tag", name: "Creampie Tag"}];
+            {id: "pop", name: "population density"},
+            {id: "creampie", name: "teen tag"},
+            {id: "teen-tag", name: "creampie tag"}];
 
 var currentCategory = null;
 
@@ -77,7 +77,7 @@ function updateForm(array) {
 
   // update caption text
   if(captionText.length > 0) {
-    text = "Compare";
+    text = "compare";
     captionText.forEach(function(d, i) {
       text += " " + d.name;
       // format punctuation and grammar
@@ -98,11 +98,11 @@ function updateForm(array) {
   }
 
   else if(currentCategory){
-    caption.text("Show me " + currentCategory + " data on...");
+    caption.text("show me " + currentCategory + " data on...");
   }
 
   else {
-    caption.text("Show me data from...");
+    caption.text("show me data from...");
   }
 
   // set radio button toggle for first selection
@@ -122,7 +122,9 @@ function updateForm(array) {
           currentCategory = null;
           // add category to caption
           captionText.push(d);
-          updateForm(categories);
+          console.log(d.id);
+          loadFactor(d.id);
+          //updateForm(categories);
         }
       });
   });
@@ -141,7 +143,7 @@ categories.forEach(function(d, i) {
     });
 });
 
-  <p>Show me data from...</p>
+  <p>show me data from...</p>
   <input type="radio" id="radio1" name="radios" value="cly">
     <label for="radio1">Chlamydia</label>
   <input type="radio" id="radio2" name="radios" value="gon">
