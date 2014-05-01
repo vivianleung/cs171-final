@@ -6,7 +6,7 @@ var margin = {
     top: 20,
     right: 40,
     bottom: 0,
-    left: 50
+    left: -60
 };
 
 var bbDetail = {
@@ -19,7 +19,7 @@ var bbDetail = {
 
 var loadedGraph = false;
 
-var width = 860 - margin.left - margin.right;
+var width = 700 - margin.left - margin.right;
 var height = 400 - margin.bottom - margin.top;
 var selected;
 var clickedState;
@@ -27,7 +27,7 @@ var clickedState;
 var bbVis = {
     x: 250,
     y: 10,
-    w: width - 100,
+    w: width,
     h: 300,
     p: 8
 };
@@ -71,8 +71,6 @@ function loadFactor(factor) {
     alert("Please de-select an option first!");
   }
   else {
-
-  
     svg.selectAll("path")
       .style("fill", function(d) {
         if(d["properties"]["name"] in factors[factor]) {
