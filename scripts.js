@@ -1,6 +1,5 @@
 /**
- * CS171 Final Project - What does SEX look like?
- * Lucas Freitas, Vivian Leung, Charlie Lovett
+ * Created by hen on 3/8/14.
  */
 
 var margin = {
@@ -15,6 +14,7 @@ var bbDetail = {
     y: 50,
     w: 360,
     h: 320
+    p: 20
 };
 
 var loadedGraph = false;
@@ -36,6 +36,7 @@ var detailVis = d3.select("#detailVis").append("svg").attr({
     height:350,
 })
 
+
 tooltip = d3.select('#vis').append("div").attr({id:'tooltip'}).style("position", "absolute")
   .style("z-index", "10")
   .style("visibility", "hidden");
@@ -54,7 +55,6 @@ var svg = canvas.append("g").attr({
 var projection = d3.geo.albersUsa().translate([width / 2, height / 2]).scale(800);
 var path = d3.geo.path().projection(projection);
 
-var dataSet = {};
 var colors = {};
 var colorDomains = {};
 var factors = {};
@@ -75,15 +75,11 @@ function loadFactor(factor) {
       .style("stroke", "white");
 
     factors.loaded = [factor];
-    // for (var k in factors) { 
-    //   factors[k].loaded = false;
-    // }
-    // factors[factor].loaded = true;
 
     // UPDATE GRAPH
 
     // update scales and axes
-    xDetailScale.domain([mins["creampie"], parseInt(maxs["creampie"]) + 1]);
+    xDetailScale.domain([mins[factor], parseInt(maxs[factor]) + 1]);
     yDetailScale.domain([maxs[factor],mins[factor]]);
     xDetailAxis.scale(xDetailScale);
     yDetailAxis.scale(yDetailScale);
@@ -99,29 +95,40 @@ function loadFactor(factor) {
 
     detailVis.select("g.y.axis").call(yDetailAxis);
 
+
+
     // load data for selected factor
     var dataSet = [];
     Object.keys(factors[factor]).forEach(function(id) {
+
       dataSet.push(factors[factor][id]);
     });
     
+    console.log(factor, dataSet)
+    // update title
+    detailVis.select('text.title').text(factor);
+
+    detailVis.selectAll("circle").remove();
+    // REMOVE CIRCLES
+
+
     // add bars
-    var bars = detailVis.selectAll("circle")
+    var bars = detailVis.append("g")
+       .selectAll("circle")
        .data(dataSet)
        .enter()
        .append("circle")
-       .attr("fill", "teal")
+       .attr("class", "stateDot")
        .attr("cx", function(d) {
-          console.log(factor, d["state"])
-          return xDetailScale(factors[factor][d["state"]]["rate_per_pop"]);
+          return xDetailScale(d["rate_per_pop"]);
        })
        .attr("cy", function(d) {
           return yDetailScale(d["rate_per_pop"]);
        })
        .attr("r", 5);
+       
 
-    // update title
-    detailVis.select('text.title').text(factor);
+
 
 }
 
@@ -143,6 +150,7 @@ function loadStats() {
       factors[factor] = {}
 
       Object.keys(data).forEach(function(id) {
+          data[id]["rate_per_pop"] = parseFloat(data[id]["rate_per_pop"]);
           factors[factor][data[id]["state"]] = data[id];
 
           // update min and max
@@ -162,6 +170,70 @@ function loadStats() {
           .range(["#97d9d9", "#195c5c"]);
     });
   });
+
+  d3.text("../data/porn_prefs.csv", function(text) {
+    var data = d3.csv.parseRows(text);
+    var headers = data.shift();
+    console.log(data, headers)
+    var header_len = headers.length;
+    var time_formatter = d3.time.format("%H:%M:%S");
+
+    factors["avg_time"] = {};
+    var avg_times = data.shift();
+    avg_times.splice(1).forEach(function(t,i) {
+      factors["avg_time"][headers[i+1]] = {"state": headers[i+1], "rate_per_pop": time_formatter.parse(t)};
+    });
+
+    data.forEach(function(factor) {
+      var factor_name = "porn_"+factor[0];
+      factors[factor_name] = {};
+      var min, max;
+      for (var st=1; st<header_len; st++ ) {
+        var rank = 4;
+        if (factor[st]) { rank = parseInt(factor[st]);}
+        factors[factor_name][headers[st]] = {"state": headers[st], "rate_per_pop": rank}
+
+        // min and max are reversed to reflect the 
+        if (!min || min < rank) { min = rank; }
+        if (!max || max > rank) { max = rank; }
+        
+      }
+      mins[factor_name] = min;
+      maxs[factor_name] = max;
+
+    })
+
+
+  })
+
+
+    
+
+  // set radio button toggle
+  d3.select("input[value=\"cly\"]").
+    on("click", function() {
+      loadFactor("cly");
+    });
+  d3.select("input[value=\"gon\"]").
+    on("click", function() {
+      loadFactor("gon");
+    });
+  d3.select("input[value=\"teen\"]").
+    on("click", function() {
+      loadFactor("teen");
+    });
+  d3.select("input[value=\"creampie\"]").
+    on("click", function() {
+      loadFactor("creampie");
+    });
+  d3.select("input[value=\"teen-tag\"]").
+    on("click", function() {
+      loadFactor("teen-tag");
+    });
+  d3.select("input[value=\"syp\"]").
+    on("click", function() {
+      loadFactor("syp");
+    });
 }
 
 
@@ -191,7 +263,7 @@ function hover(d) {
 
 function movetip(d) {
   if (selected) {
-    var tipHTML = "<strong>" + d.properties.name + "</strong>";
+    var tipHTML = d.properties.name;
     if (factors.loaded) {
       tipHTML += "<br/>"+factors.loaded[0]+": "+factors[factors.loaded[0]][d.properties.name].rate_per_pop; 
     }
@@ -211,9 +283,6 @@ function movetip(d) {
 function createDetailVis(){
 
     xDetailScale = d3.scale.linear().range([10, bbDetail.w]);
-    
-    detailVis.append("rect");
-
     yDetailScale = d3.scale.linear().range([10, bbDetail.h]);
 
     xDetailAxis = d3.svg.axis()
@@ -221,18 +290,20 @@ function createDetailVis(){
         .ticks(5);
 
     yDetailAxis = d3.svg.axis()
-        .orient("right")
+        .orient("left")
         .ticks(6);
+
+    detailVis.append("svg");
 
     // add x axis
     detailVis.append("g")
           .attr("class", "x axis")
-          .attr("transform", "translate(0," + bbDetail.h + ")");
+          .attr("transform", "translate("+bbDetail.p/2+"," + (bbDetail.h+bbDetail.p)  + ")")
 
     // add y axis
     detailVis.append("g")
           .attr("class", "y axis")
-          .attr("transform", "translate(10,0)");
+          .attr("transform", "translate("+ bbDetail.p +","+bbDetail.p+")");
 
     // add title
     detailVis.append("text")
