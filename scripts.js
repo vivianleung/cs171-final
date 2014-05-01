@@ -65,6 +65,13 @@ var tooltip;
 var xDetailAxis, xDetailAxis, yDetailAxis, yDetailScale;
 
 function loadFactor(factor) {
+
+  if (factors.loaded.length == 3) {
+    alert("Please de-select an option first!");
+  }
+  else {
+
+  
     svg.selectAll("path")
       .style("fill", function(d) {
         if(d["properties"]["name"] in factors[factor]) {
@@ -75,7 +82,7 @@ function loadFactor(factor) {
       })
       .style("stroke", "white");
 
-    factors.loaded = [factor];
+
 
     // UPDATE GRAPH
 
@@ -126,6 +133,8 @@ function loadFactor(factor) {
           return yDetailScale(d["rate_per_pop"]);
        })
        .attr("r", 5);
+    factors.loaded.push(factor);
+  }
 }
 
 function loadStats() {
@@ -176,11 +185,17 @@ function loadStats() {
     var header_len = headers.length;
     var time_formatter = d3.time.format("%H:%M:%S");
 
-    factors["avg_time"] = {};
+    factors["porn_avg_time"] = {};
+    var time_min, time_max;
     var avg_times = data.shift();
     avg_times.splice(1).forEach(function(t,i) {
-      factors["avg_time"][headers[i+1]] = {"state": headers[i+1], "rate_per_pop": time_formatter.parse(t)};
+      factors["porn_avg_time"][headers[i+1]] = {"state": headers[i+1], "rate_per_pop": time_formatter.parse(t)};
+      if (!time_min || time_min > time_formatter.parse(t)) { time_min = time_formatter.parse(t);}
+      if (!time_max || time_max < time_formatter.parse(t)) { time_max = time_formatter.parse(t); }
     });
+
+    mins["porn_avg_time"] = time_min;
+    maxs["porn_avg_time"] = time_max;
 
     data.forEach(function(factor) {
       var factor_name = "porn_"+factor[0];
@@ -201,6 +216,8 @@ function loadStats() {
 
     })
   })
+
+  factors.loaded = [];
 }
 
 d3.json("../data/us-named.json", function(error, data) {
@@ -230,8 +247,11 @@ function hover(d) {
 function movetip(d) {
   if (selected) {
     var tipHTML = d.properties.name;
-    if (factors.loaded) {
-      tipHTML += "<br/>"+factors.loaded[0]+": "+factors[factors.loaded[0]][d.properties.name].rate_per_pop; 
+    if (factors.loaded.length > 0) {
+      factors.loaded.forEach(function(selector){
+        tipHTML += "<br/>"+selector+": "+factors[selector][d.properties.name].rate_per_pop; 
+
+      })
     }
 
     var tXY = d3.mouse(d3.select('#vis')[0][0]);
@@ -258,8 +278,6 @@ function createDetailVis(){
     yDetailAxis = d3.svg.axis()
         .orient("left")
         .ticks(6);
-
-    detailVis.append("svg");
 
     // add x axis
     detailVis.append("g")
