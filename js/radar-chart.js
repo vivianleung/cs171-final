@@ -86,6 +86,7 @@ var RadarChart = {
           ]);
         });
       dataValues.push(dataValues[0]);
+
       g.selectAll(".area")
                      .data([dataValues])
                      .enter()
@@ -106,6 +107,7 @@ var RadarChart = {
                                         z = "polygon."+d3.select(this).attr("class");
                                         g.selectAll("polygon").transition(200).style("fill-opacity", 0.1); 
                                         g.selectAll(z).transition(200).style("fill-opacity", .7);
+                                      
                                       })
                      .on('mouseout', function(){
                                         g.selectAll("polygon").transition(200).style("fill-opacity", cfg.opacityArea);
@@ -150,7 +152,27 @@ var RadarChart = {
 
       series++;
     });
-    //Tooltip
+    // Tooltip
     tooltip = g.append('text').style('opacity', 0).style('font-family', 'sans-serif').style('font-size', '13px');
+    
+    // Added by Lucas Freitas
+    var label = g.append("text")
+                   .attr("id", "tooltip")
+                   .attr("fill", "teal")
+                   .attr("dy", 10)
+                   .attr("dx", 50)
+                   .style("visibility", "hidden");
+
+    // Graph labels
+    g.selectAll("polygon")
+        .on('mouseover', function (d, index){
+            console.log(d);
+            console.log(cfg.labels);
+            label.html(cfg.labels[index])
+            label.style("visibility", "visible");
+        })
+        .on('mouseout', function(){
+            label.style("visibility", "hidden");
+        });
   }
 };

@@ -60,10 +60,18 @@ var colorDomains = {};
 var factors = {};
 var mins = {};
 var maxs = {};
+var averages = {};
 var tooltip;
 var xDetailAxis, xDetailAxis, yDetailAxis, yDetailScale;
 
 function loadFactor(factor) {
+
+  if (factors.loaded.length == 3) {
+    alert("Please de-select an option first!");
+  }
+  else {
+
+  
     svg.selectAll("path")
       .style("fill", function(d) {
         if(d["properties"]["name"] in factors[factor]) {
@@ -74,7 +82,7 @@ function loadFactor(factor) {
       })
       .style("stroke", "white");
 
-    factors.loaded = [factor];
+
 
     // UPDATE GRAPH
 
@@ -104,7 +112,6 @@ function loadFactor(factor) {
       dataSet.push(factors[factor][id]);
     });
     
-    console.log(factor, dataSet)
     // update title
     detailVis.select('text.title').text(factor);
 
@@ -126,10 +133,8 @@ function loadFactor(factor) {
           return yDetailScale(d["rate_per_pop"]);
        })
        .attr("r", 5);
-       
-
-
-
+    factors.loaded.push(factor);
+  }
 }
 
 function loadStats() {
@@ -142,9 +147,10 @@ function loadStats() {
     var filePath = "../data/" + factor + "_data.csv";
 
     d3.csv(filePath, function(error,data){
-      // find min and max
+      // find min, max and average
       var min;
       var max;
+      var average = 0;
 
       // create factor array
       factors[factor] = {}
@@ -152,6 +158,7 @@ function loadStats() {
       Object.keys(data).forEach(function(id) {
           data[id]["rate_per_pop"] = parseFloat(data[id]["rate_per_pop"]);
           factors[factor][data[id]["state"]] = data[id];
+          average += data[id]["rate_per_pop"];
 
           // update min and max
           if(!min || data[id]["rate_per_pop"] < min)
@@ -163,6 +170,7 @@ function loadStats() {
       // save min and max
       mins[factor] = min;
       maxs[factor] = max;
+      averages[factor] = average/(Object.keys(data).length);
 
       // create color scale
       colorDomains[factor] = d3.scale.linear()
@@ -174,15 +182,20 @@ function loadStats() {
   d3.text("../data/porn_prefs.csv", function(text) {
     var data = d3.csv.parseRows(text);
     var headers = data.shift();
-    console.log(data, headers)
     var header_len = headers.length;
     var time_formatter = d3.time.format("%H:%M:%S");
 
-    factors["avg_time"] = {};
+    factors["porn_avg_time"] = {};
+    var time_min, time_max;
     var avg_times = data.shift();
     avg_times.splice(1).forEach(function(t,i) {
-      factors["avg_time"][headers[i+1]] = {"state": headers[i+1], "rate_per_pop": time_formatter.parse(t)};
+      factors["porn_avg_time"][headers[i+1]] = {"state": headers[i+1], "rate_per_pop": time_formatter.parse(t)};
+      if (!time_min || time_min > time_formatter.parse(t)) { time_min = time_formatter.parse(t);}
+      if (!time_max || time_max < time_formatter.parse(t)) { time_max = time_formatter.parse(t); }
     });
+
+    mins["porn_avg_time"] = time_min;
+    maxs["porn_avg_time"] = time_max;
 
     data.forEach(function(factor) {
       var factor_name = "porn_"+factor[0];
@@ -202,40 +215,10 @@ function loadStats() {
       maxs[factor_name] = max;
 
     })
-
-
   })
 
-
-    
-
-  // set radio button toggle
-  d3.select("input[value=\"cly\"]").
-    on("click", function() {
-      loadFactor("cly");
-    });
-  d3.select("input[value=\"gon\"]").
-    on("click", function() {
-      loadFactor("gon");
-    });
-  d3.select("input[value=\"teen\"]").
-    on("click", function() {
-      loadFactor("teen");
-    });
-  d3.select("input[value=\"creampie\"]").
-    on("click", function() {
-      loadFactor("creampie");
-    });
-  d3.select("input[value=\"teen-tag\"]").
-    on("click", function() {
-      loadFactor("teen-tag");
-    });
-  d3.select("input[value=\"syp\"]").
-    on("click", function() {
-      loadFactor("syp");
-    });
+  factors.loaded = [];
 }
-
 
 d3.json("../data/us-named.json", function(error, data) {
     var usMap = topojson.feature(data,data.objects.states).features
@@ -243,11 +226,11 @@ d3.json("../data/us-named.json", function(error, data) {
     svg.selectAll(".country").data(usMap).enter().append("path").attr("d", path).attr("class","state")
       .on("mousemove", movetip)
       .on("mouseover", hover)
-      .on("mouseout", hover);
+      .on("mouseout", hover)
+      .on("click", displaySundial);
 
     loadStats();
     createDetailVis();
-
 });
 
 function hover(d) {
@@ -264,8 +247,11 @@ function hover(d) {
 function movetip(d) {
   if (selected) {
     var tipHTML = d.properties.name;
-    if (factors.loaded) {
-      tipHTML += "<br/>"+factors.loaded[0]+": "+factors[factors.loaded[0]][d.properties.name].rate_per_pop; 
+    if (factors.loaded.length > 0) {
+      factors.loaded.forEach(function(selector){
+        tipHTML += "<br/>"+selector+": "+factors[selector][d.properties.name].rate_per_pop; 
+
+      })
     }
 
     var tXY = d3.mouse(d3.select('#vis')[0][0]);
@@ -293,8 +279,6 @@ function createDetailVis(){
         .orient("left")
         .ticks(6);
 
-    detailVis.append("svg");
-
     // add x axis
     detailVis.append("g")
           .attr("class", "x axis")
@@ -313,8 +297,6 @@ function createDetailVis(){
 }
 
 // menu code
-
-
 var menu = d3.select("#menu");
 
 // add caption
@@ -333,15 +315,22 @@ var categories = [{id: "sh", name: "sexual health", children: ["cly", "syp", "hi
                   {id: "porn", name: "pornography usage", children: ["creampie", "teen-tag"]}];
 
 // possible tags
-var tags = [{id: "cly", name: "chlamydia"},
-            {id: "syp", name: "syphilis"},
-            {id: "hiv", name: "HIV"},
-            {id: "gon", name: "gonorrhea"},
-            {id: "teen", name: "teen pregnancy"},
-            {id: "gdp", name: "GDP"},
-            {id: "pop", name: "population density"},
-            {id: "creampie", name: "teen tag"},
-            {id: "teen-tag", name: "creampie tag"}];
+var tags = {"cly": "chlamydia",
+            "syp": "syphilis",
+            "hiv": "HIV",
+            "gon": "gonorrhea",
+            "teen": "teen pregnancy",
+            "gdp": "GDP",
+            "pop": "population density",
+            "creampie": "teen tag",
+            "teen-tag": "creampie tag"};
+
+// helper array to save on computations
+var tagsArray = [];
+var keys = Object.keys(tags);
+for(tag in keys) {
+  tagsArray.push({id: keys[tag], name: tags[keys[tag]]});
+}
 
 var currentCategory = null;
 
@@ -425,7 +414,7 @@ function updateForm(array) {
         // go into category
         if(d.children) {
           currentCategory = d.name;
-          updateForm(tags.filter(function(el, j) {
+          updateForm(tagsArray.filter(function(el, j) {
             return (d.children.indexOf(el.id) > -1) && (captionText.indexOf(el) < 0);
           }));
         }
@@ -446,14 +435,31 @@ updateForm(categories);
 
 // sundial code
 
-function displaySundial(state) {
+function displaySundial(d) {
   var points = [];
-  tags.forEach(function(d){
-    points.push({"axis": d.name, "value": 3});
+  var average = [];
+
+  var tagIds = tagsArray.map(function(d) {
+    return d.id;
   });
-  
 
-  RadarChart.draw("#chart", [points]);
+  if(factors) {
+    for(key in factors) {
+      if(tagIds.indexOf(key) >= 0) {
+        points.push({"axis": tags[key].toUpperCase(), "value": (factors[key][d.properties.name].rate_per_pop)/(maxs[key] - mins[key])});
+        average.push({"axis": tags[key].toUpperCase(), "value": averages[key]/(maxs[key] - mins[key])});
+      }
+    } 
+
+    var attributes = {
+      color: function(i){
+        return (i == 1) ? "#97d9d9" : "#00d9bd";
+      },
+      w: 400,
+      h: 350,
+      labels: [d.properties.name, "National Average"]
+    }
+
+    RadarChart.draw("#detailVis", [points, average], attributes);
+  }
 }
-
-//displaySundial("hi");
