@@ -294,8 +294,6 @@ function createDetailVis(){
         .orient("left")
         .ticks(6);
 
-    detailVis.append("svg");
-
     // add x axis
     detailVis.append("g")
           .attr("class", "x axis")
