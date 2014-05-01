@@ -282,3 +282,7 @@ i.fa-arrow-down {
 span.detail {
   color: #00d9bd;
 }
+
+table {
+  margin: 0 auto;
+}
