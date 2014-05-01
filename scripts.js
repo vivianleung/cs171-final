@@ -61,6 +61,7 @@ var projection = d3.geo.albersUsa().translate([width / 2, height / 2]).scale(800
 var path = d3.geo.path().projection(projection);
 
 var colors = {};
+var colorDomains = {};
 
 // each object in each array of R, G, and B represent corresponding components
 // of the blue (index 0) and red (index 1) scales
@@ -81,54 +82,48 @@ var xDetailAxis, xDetailAxis, yDetailAxis, yDetailScale;
 
 function loadFactor(factor) {
 
-  if (factors.loaded.length >= 3) {
+  if (factors.loaded.length == 3) {
     alert("Please de-select an option first!");
   }
   else {
     factors.loaded.push(factor);
-    updateMap();
-  }
-}
 
-function updateMap() {
     // calculates RGB color value for datum based on selected factor(s)
     var colorize = function(datum) {
 
-      if (datum.length == 0) { return "grey"; }
-      else {
-        var scaled_factors_sum = 0;
-        var scaled_factors = [];
+      var scaled_factors_sum = 0;
+      var scaled_factors = [];
 
-        // scaled value for the factor by factor's range
-        datum.forEach(function(raw_factor, i) {
-          scaled_factors.push((raw_factor - mins[factors.loaded[i]]) / ranges[factors.loaded[i]]);
-          scaled_factors_sum += scaled_factors[i];
+      // scaled value for the factor by factor's range
+      datum.forEach(function(raw_factor, i) {
+        scaled_factors.push((raw_factor - mins[factors.loaded[i]]) / ranges[factors.loaded[i]]);
+        scaled_factors_sum += scaled_factors[i];
+      })
+      var RGB = {};
+      // for each RGB component, sum of [(scaled color value, by factor value) * factor weight in datum]
+      for (var c in colorRanges) {
+        var prima_color = 0;          
+        scaled_factors.forEach(function(scaled_fact, i) {
+          var factor_ratio; 
+          if (scaled_factors_sum == 0) { factor_ratio = 1/scaled_factors.length }
+          else { factor_ratio = scaled_fact/scaled_factors_sum; }
+          // factor ratio scaling to weigh a state's factor values, i.e. to reflect whether there is correlation between factors
+          prima_color += (colorRanges[c][i]["min"] - scaled_fact*colorRanges[c][i]["range"]) * factor_ratio;
         })
-        var RGB = {};
-        // for each RGB component, sum of [(scaled color value, by factor value) * factor weight in datum]
-        for (var c in colorRanges) {
-          var prima_color = 0;          
-          scaled_factors.forEach(function(scaled_fact, i) {
-            var factor_ratio; 
-            if (scaled_factors_sum == 0) { factor_ratio = 1/scaled_factors.length }
-            else { factor_ratio = scaled_fact/scaled_factors_sum; }
-            // factor ratio scaling to weigh a state's factor values, i.e. to reflect whether there is correlation between factors
-            prima_color += (colorRanges[c][i]["min"] - scaled_fact*colorRanges[c][i]["range"]) * factor_ratio;
-          })
-          RGB[c] = Math.round(prima_color);
-        }
-
-        return "rgb("+RGB.r+","+RGB.g+","+RGB.b + ")";
+        RGB[c] = Math.round(prima_color);
       }
-    }
+
+    var color = "rgb("+RGB.r+","+RGB.g+","+RGB.b + ")";
+    return color;
+  }
     
     // most recently selected factor
-    var factor;
+    var factor = "";
 
     // removes old circles
     detailVis.select("g.circles").remove();
 
-    // if no factors selected
+    // if no factors selected, reset state colors to default color
     if (factors.loaded.length == 0) {
       svg.selectAll("path")
         .style("fill", function(d) {
@@ -136,9 +131,9 @@ function updateMap() {
           return "#97d9d9";
         })
       .style("stroke", "white");
-      factor = ""; 
-
     }
+
+    // if factors are selected
     else {
       // sets state color
       svg.selectAll("path")
@@ -157,7 +152,7 @@ function updateMap() {
     
       // UPDATE GRAPH
 
-      // update scales and axes
+      // update scales and axes with appropriate domains
       factor = factors.loaded[factors.loaded.length-1];
       xDetailScale.domain([mins[factor], maxs[factor] + 1]);
       yDetailScale.domain([maxs[factor], 0]);
@@ -204,6 +199,7 @@ function updateMap() {
 
   // update title
   detailVis.select('text.title').text(factor);
+    
 }
 
 // possible tags
@@ -226,9 +222,8 @@ var scales = {"cly": {scale: 100000, unit: "people"},
               "teen": {scale: 1000, unit: "teenage girls"},
               "gdp": {scale: null, unit: "billions"},
               "pop": {scale: null, unit: "millions"},
-              "creampie": {scale: 3, "teen tag", unit: },
-              "stateID": {scale: 3, "state index", unit: },
-              "teen-tag": {scale: 3, "creampie tag"};
+              "teen-tag": {scale: 3, unit: "top 3"},
+              "creampie": {scale: 3, unit: "top 3"}};
 
 function loadStats() {
   // file names for each of the factors
@@ -266,6 +261,9 @@ function loadStats() {
       ranges[factor] = max - min;
       averages[factor] = average/(Object.keys(data).length);
 
+      // create color scale
+      colorDomains[factor] = d3.scale.linear()
+          .domain([min, max]);
     });
   });
 
@@ -432,8 +430,6 @@ function updateForm(array) {
         // remove last tag
         captionText.pop();
         currentCategory = null;
-        factors.loaded.pop();
-        updateMap();
         updateForm(categories);
       });
   }
@@ -505,7 +501,6 @@ function updateForm(array) {
         // add element to caption and return to categories
         else {
           currentCategory = null;
-
           // add category to caption
           captionText.push(d);
           loadFactor(d.id);
