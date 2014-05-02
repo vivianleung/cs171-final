@@ -1,65 +1,51 @@
-state,rate_by_pop
- Alabama,95.4
- Alaska,1.3
- Arizona,58.3
- Arkansas,56.9
- California,246.1
- Colorado,50.8
- Connecticut,742.6
- Delaware,475.1
- Florida,364.6
- Georgia,173.7
- Hawaii,218.6
- Idaho,19.5
- Illinois,232
- Indiana,183.4
- Iowa,55.3
- Kansas,35.4
- Kentucky,111.3
- Louisiana,107.1
- Maine,43.1
- Maryland,610.8
- Massachusetts,858
- Michigan,175
- Minnesota,68.1
- Mississippi,63.7
- Missouri,87.9
- Montana,7
- Nebraska,24.3
- Nevada,25.4
- New Hampshire,147.8
- New Jersey,1210.1
- New Mexico,17.2
- New York,417
- North Carolina,202.6
- North Dakota,10.5
- Ohio,283.2
- Oklahoma,56.1
- Oregon,40.9
- Pennsylvania,285.5
- Rhode Island,1017.1
- South Carolina,158.8
- South Dakota,11.1
- Tennessee,157.5
- Texas,101.2
- Utah,35.3
- Vermont,68
- Virginia,209.2
- Washington,104.9
- West Virginia,77.1
- Wisconsin,106
- Wyoming,6
-       East North Central,192.1
-       East South Central,105
-       Mid-Atlantic,416.5
-       Mountain,26.7
-       New England,233.2
-       Pacific,57.4
-       South Atlantic,233.1
-       West North Central,41.1
-       West South Central,89.1
-       Midwest,90
-       Northeast,345.5
-       South,136.3
-       West,42.4
- District of Columbia,10588.8
+state,rate_per_pop
+Alabama,95.4
+Alaska,1.3
+Arizona,58.3
+Arkansas,56.9
+California,246.1
+Colorado,50.8
+Connecticut,742.6
+Delaware,475.1
+Florida,364.6
+Georgia,173.7
+Hawaii,218.6
+Idaho,19.5
+Illinois,232
+Indiana,183.4
+Iowa,55.3
+Kansas,35.4
+Kentucky,111.3
+Louisiana,107.1
+Maine,43.1
+Maryland,610.8
+Massachusetts,858
+Michigan,175
+Minnesota,68.1
+Mississippi,63.7
+Missouri,87.9
+Montana,7
+Nebraska,24.3
+Nevada,25.4
+New Hampshire,147.8
+New Jersey,1210.1
+New Mexico,17.2
+New York,417
+North Carolina,202.6
+North Dakota,10.5
+Ohio,283.2
+Oklahoma,56.1
+Oregon,40.9
+Pennsylvania,285.5
+Rhode Island,1017.1
+South Carolina,158.8
+South Dakota,11.1
+Tennessee,157.5
+Texas,101.2
+Utah,35.3
+Vermont,68
+Virginia,209.2
+Washington,104.9
+West Virginia,77.1
+Wisconsin,106
+Wyoming,6

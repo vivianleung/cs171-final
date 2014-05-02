@@ -1,52 +1,52 @@
 state,rank,rate_per_pop
- California,1,1891363
- Texas,2,1244695
- New York,3,1093219
- Florida,4,737038
- Illinois,5,630398
- Pennsylvania,6,554774
- Ohio,8,471264
- New Jersey,7,482967
- Georgia,11,395194
- North Carolina,10,398042
- Virginia,9,408443
- Michigan,12,368401
- Massachusetts,13,365182
- Washington,14,338334
- Maryland,15,286797
- Indiana,16,262647
- Minnesota,17,260692
- Tennessee,20,244508
- Arizona,18,256364
- Wisconsin,21,244370
- Colorado,19,252657
- Missouri,22,239752
- Louisiana,24,208377
- Connecticut,23,227405
- Alabama,25,169856
- Oregon,26,165648
- South Carolina,27,159647
- Kentucky,28,156553
- Oklahoma,29,153778
- Iowa,30,142282
- Nevada,31,126503
- Kansas,32,124921
- Utah,33,112941
- Arkansas,34,101818
- District of Columbia,,99129
- Mississippi,35,95905
- Nebraska,36,86439
- New Mexico,37,74801
- Hawaii,38,66431
- Delaware,40,60588
- West Virginia,39,63344
- New Hampshire,41,59400
- Idaho,42,54005
- Maine,43,51293
- Alaska,45,45709
- Rhode Island,44,47837
- South Dakota,46,38308
- Montana,48,35954
- Wyoming,47,37544
- North Dakota,49,31872
- Vermont,50,25438
+California,1,1891363
+Texas,2,1244695
+New York,3,1093219
+Florida,4,737038
+Illinois,5,630398
+Pennsylvania,6,554774
+Ohio,8,471264
+New Jersey,7,482967
+Georgia,11,395194
+North Carolina,10,398042
+Virginia,9,408443
+Michigan,12,368401
+Massachusetts,13,365182
+Washington,14,338334
+Maryland,15,286797
+Indiana,16,262647
+Minnesota,17,260692
+Tennessee,20,244508
+Arizona,18,256364
+Wisconsin,21,244370
+Colorado,19,252657
+Missouri,22,239752
+Louisiana,24,208377
+Connecticut,23,227405
+Alabama,25,169856
+Oregon,26,165648
+South Carolina,27,159647
+Kentucky,28,156553
+Oklahoma,29,153778
+Iowa,30,142282
+Nevada,31,126503
+Kansas,32,124921
+Utah,33,112941
+Arkansas,34,101818
+District of Columbia,,99129
+Mississippi,35,95905
+Nebraska,36,86439
+New Mexico,37,74801
+Hawaii,38,66431
+Delaware,40,60588
+West Virginia,39,63344
+New Hampshire,41,59400
+Idaho,42,54005
+Maine,43,51293
+Alaska,45,45709
+Rhode Island,44,47837
+South Dakota,46,38308
+Montana,48,35954
+Wyoming,47,37544
+North Dakota,49,31872
+Vermont,50,25438

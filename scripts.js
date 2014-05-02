@@ -39,6 +39,14 @@ var detailVis = d3.select("#detailVis").append("svg").attr({
     .append("g")
     .attr("transform", "translate("+(2*bbDetail.p)+","+bbDetail.p+")");
 
+// possible tags
+var tags = {"cly": "chlamydia",
+            "syp": "syphilis",
+            "hiv": "HIV",
+            "gon": "gonorrhea",
+            "teen": "teen pregnancy",
+            "gdp": "GDP",
+            "pop": "population density"};
 
 
 tooltip = d3.select('#vis').append("div").attr({id:'tooltip'}).style("position", "absolute")
@@ -78,6 +86,14 @@ var averages = {};
 var tooltip;
 var xDetailAxis, xDetailAxis, yDetailAxis, yDetailScale, hDetailScale;
 
+// tag categories
+var categories = [{id: "sh", name: "sexual health", children: ["cly", "syp", "hiv", "gon"]},
+                  {id: "sb", name: "social behavior", children: ["teen", "gdp", "pop"]},
+                  {id: "porn", name: "pornography usage", children: []}];
+
+
+
+
 function loadFactor(factor) {
 
   if (factors.loaded.length == 3) {
@@ -93,30 +109,34 @@ function updateMap() {
     // calculates RGB color value for datum based on selected factor(s)
     var colorize = function(datum) {
 
-      var scaled_factors_sum = 0;
-      var scaled_factors = [];
+      if (datum.length == 0) { return "grey"} 
+      else {
+        var scaled_factors_sum = 0;
+        var scaled_factors = [];
 
-      // scaled value for the factor by factor's range
-      datum.forEach(function(raw_factor, i) {
-        scaled_factors.push((raw_factor - mins[factors.loaded[i]]) / ranges[factors.loaded[i]]);
-        scaled_factors_sum += scaled_factors[i];
-      })
-      var RGB = {};
-      // for each RGB component, sum of [(scaled color value, by factor value) * factor weight in datum]
-      for (var c in colorRanges) {
-        var prima_color = 0;          
-        scaled_factors.forEach(function(scaled_fact, i) {
-          var factor_ratio; 
-          if (scaled_factors_sum == 0) { factor_ratio = 1/scaled_factors.length }
-          else { factor_ratio = scaled_fact/scaled_factors_sum; }
-          // factor ratio scaling to weigh a state's factor values, i.e. to reflect whether there is correlation between factors
-          prima_color += (colorRanges[c][i]["min"] - scaled_fact*colorRanges[c][i]["range"]) * factor_ratio;
+        // scaled value for the factor by factor's range
+        datum.forEach(function(raw_factor, i) {
+          scaled_factors.push((raw_factor - mins[factors.loaded[i]]) / ranges[factors.loaded[i]]);
+          scaled_factors_sum += scaled_factors[i];
         })
-        RGB[c] = Math.round(prima_color);
-      }
 
-      var color = "rgb("+RGB.r+","+RGB.g+","+RGB.b + ")";
-      return color;
+        var RGB = {};
+        // for each RGB component, sum of [(scaled color value, by factor value) * factor weight in datum]
+        for (var c in colorRanges) {
+          var prima_color = 0;          
+          scaled_factors.forEach(function(scaled_fact, i) {
+            var factor_ratio; 
+            if (scaled_factors_sum == 0) { factor_ratio = 1/scaled_factors.length }
+            else { factor_ratio = scaled_fact/scaled_factors_sum; }
+            // factor ratio scaling to weigh a state's factor values, i.e. to reflect whether there is correlation between factors
+            prima_color += (colorRanges[c][i]["min"] - scaled_fact*colorRanges[c][i]["range"]) * factor_ratio;
+          })
+          RGB[c] = Math.round(prima_color);
+        }
+
+        var color = "rgb("+RGB.r+","+RGB.g+","+RGB.b + ")";
+        return color; 
+      }
     }
     
   // most recently selected factor
@@ -178,26 +198,17 @@ function updateMap() {
  
        // sets x scale, axis (for plotting) with padding to accomodate bins
       var bin_value_size = hDetailScale.invertExtent(1)[1]-hDetailScale.invertExtent(1)[0];
-      xDetailScale.domain([mins[params]-bin_value_size/2, maxs[params]+bin_value_size/2]);
+      var xScaleMin;
+      if (mins[params] < bin_value_size/2) {xScaleMin = 0;}
+      else { xScaleMin = mins[params]-bin_value_size/2; }
 
-      var roundTo = 0;
-      var quotient = ranges[params]/12;
-      if (quotient < 1) {
-        do { quotient = quotient*12;
-             roundTo--; }
-        while (quotient < 1);
-      }
-      else if (quotient >= 12) {
-        do { quotient = quotient/12;
-             roundTo++; }
-        while (quotient >= 12);
-      }
+      xDetailScale.domain([xScaleMin, maxs[params]+bin_value_size/2]);
 
       // make tick vlues based on hDetail range (invert?)
       xDetailAxis.scale(xDetailScale)
         .tickValues(function(d) {
           var v = values.map(function(b, i) {
-            b["val"] =  d3.round(hDetailScale.invertExtent(i)[1]-bin_value_size/2, roundTo); 
+            b["val"] =  d3.round(hDetailScale.invertExtent(i)[1]-bin_value_size/2, -1); 
             return b["val"];
           })
           return v;
@@ -207,13 +218,13 @@ function updateMap() {
       var bin_min;
       var bin_max;
       values.forEach(function(b, i) {
-        var freq = b.states.length;
-        b["freq"] = freq;
+        
+        b["freq"] = b.states.length;
         if (!bin_min || bin_min > b["freq"]) {bin_min = b["freq"];}
-        if (!bin_max || bin_max < b["freq"]) { bin_max= b["freq"];}
+        if (!bin_max || bin_max < b["freq"]) {bin_max= b["freq"];}
       })
 
-      yDetailScale.domain([bin_max, 0]);
+      yDetailScale.domain([0, bin_max]);
       yDetailAxis.scale(yDetailScale);
 
       // append bars for each bin (adjust position for tick)
@@ -238,9 +249,9 @@ function updateMap() {
          .enter()
          .append("rect")
          .attr({class:"stateBar", width:bin_plot_size - 2*bar_pad})
-         .attr("height", function(d) {return yDetailScale(d.freq)})
+         .attr("height", function(d) {return yDetailScale(bin_max - d.freq)})
          .attr("x", function(d) { return xDetailScale(d.val) - bar_pad - bin_plot_size/2; })
-         .attr("y", function(d) {return bbDetail.h - yDetailScale(d.freq); });
+         .attr("y", function(d) {return yDetailScale(d.freq) - bbDetail.p/2; });
          
 
       // tooltip stuff
@@ -251,75 +262,68 @@ function updateMap() {
 
     }
 
-    // // 2 factors selected:  XY Plot
-    // else if (params.length == 2) {
+    // 2 factors selected:  XY Plot
+    else if (params.length == 2) {
+
+      var x = params[0];
+      var y = params[1];
+
+      // update scales and axes with appropriate domains
+      xDetailScale.domain([0, maxs[x]]);
+      yDetailScale.domain([0, maxs[y]]);
+
+      xDetailAxis = d3.svg.axis().orient("bottom").ticks(5);
+      xDetailAxis.scale(xDetailScale);
+      yDetailAxis.scale(yDetailScale);
+
+      var xAxis = detailVis.select("g.x.axis")
+      xAxis.call(xDetailAxis)
+          .selectAll("text:not(.label)") 
+          .style("text-anchor", "end")
+          .attr("dx", "-.8em").attr("dy", ".15em")
+          .attr("transform", function(d) { return "rotate(-65)" });
+
+      xAxis.select("text.label").text(x)
+
+      detailVis.select("g.y.axis").call(yDetailAxis)
+        .select("text.label").text(y);
+
+      var dataSet = [];
+
+      Object.keys(factors[x]).forEach(function(st){
+        var obj = {};
+        obj["state"] = st;
+        obj[x] = factors[x][st]["rate_per_pop"];
+        obj[y] = factors[y][st]["rate_per_pop"];
+        dataSet.push(obj);
+
+      })
 
 
-    // }
+      // add circles
+      var circles = detailVis.append("g")
+         .attr("class","factordata")
+         .attr("transform","translate("+bbDetail.p+","+bbDetail.p+")")
+         .selectAll("circle")
+         .data(dataSet)
+         .enter()
+         .append("circle")
+         .attr("class", "stateDot")
+         .attr("cx", function(d) {
+            return xDetailScale(d[x]);
+         })
+         .attr("cy", function(d) {
+            return yDetailScale(d[y]);
+         })
+         .attr("r", bbDetail.r);
 
-
-    // // update scales and axes with appropriate domains
-    // xDetailScale.domain([mins[params[0]], maxs[params[0]]]);
-
-    // yDetailScale.domain([maxs[params[0]], 0]);
-
-    // xDetailAxis.scale(xDetailScale);
-    // yDetailAxis.scale(yDetailScale);
-
-    // var xAxis = detailVis.select("g.x.axis")
-    // var factor = params[0];
-    // xAxis.call(xDetailAxis)
-    //     .selectAll("text:not(.label)") 
-    //     .style("text-anchor", "end")
-    //     .attr("dx", "-.8em").attr("dy", ".15em")
-    //     .attr("transform", function(d) { return "rotate(-65)" });
-
-    // xAxis.select("text.label").text(factor)
-
-    // detailVis.select("g.y.axis").call(yDetailAxis)
-    //   .select("text.label").text(factor);
-
-    // var dataSet = [];
-    //   Object.keys(factors[factor]).forEach(function(id) {
-    //     dataSet.push(factors[factor][id]);
-    //   });
-    // console.log(dataSet)
-
-
-    // // add bars
-    // var bars = detailVis.append("g")
-    //    .attr("class","circles")
-    //    .attr("transform","translate("+bbDetail.p+","+bbDetail.p+")")
-    //    .selectAll("circle")
-    //    .data(dataSet)
-    //    .enter()
-    //    .append("circle")
-    //    .attr("class", "stateDot")
-    //    .attr("cx", function(d) {
-    //       return xDetailScale(d["rate_per_pop"]);
-    //    })
-    //    .attr("cy", function(d) {
-    //       return yDetailScale(d["rate_per_pop"]);
-    //    })
-    //    .attr("r", bbDetail.r);
-
-    // }
-
+      }
+    }
     // update title
     detailVis.select('text.title').text(factor);
-  }
+  
 }
 
-// possible tags
-var tags = {"cly": "chlamydia",
-            "syp": "syphilis",
-            "hiv": "HIV",
-            "gon": "gonorrhea",
-            "teen": "teen pregnancy",
-            "gdp": "GDP",
-            "pop": "population density",
-            "creampie": "teen tag",
-            "teen-tag": "creampie tag"};
 
 // possible tags
 var scales = {"cly": {scale: 100000, unit: "people"},
@@ -335,7 +339,7 @@ var scales = {"cly": {scale: 100000, unit: "people"},
 function loadStats() {
   // file names for each of the factors
 
-  var dataFiles = ["cly", "gon", "syp", "teen", "gdp", "pop"];
+  var dataFiles = ["cly", "gon", "syp", "teen", "gdp", "pop", "hiv"];
 
   // iterate over all factors
   dataFiles.forEach(function(factor) {
@@ -349,7 +353,6 @@ function loadStats() {
 
       // create factor array
       factors[factor] = {}
-      console.log(factor, Object.keys(data))
       Object.keys(data).forEach(function(id) {
           data[id]["rate_per_pop"] = parseFloat(data[id]["rate_per_pop"]);
           factors[factor][data[id]["state"]] = data[id];
@@ -412,6 +415,7 @@ function loadStats() {
       ranges[factor_name] = max - min;
       tags[factor_name] = factor[0];
       categories[2].children.push(factor_name);
+
     })
   })
 
@@ -468,14 +472,11 @@ function createDetailVis(){
 
     // scales and axes (to update with domains of user-selected factors)
     xDetailScale = d3.scale.linear().range([10, bbDetail.w]);
-    yDetailScale = d3.scale.linear().range([10, bbDetail.h]);
-    hDetailScale = d3.scale.quantize().range(d3.range(12));
+    yDetailScale = d3.scale.linear().range([bbDetail.h, 10]);
+    hDetailScale = d3.scale.quantize().range(d3.range(8));
 
     xDetailAxis = d3.svg.axis().orient("bottom").ticks(5);
     yDetailAxis = d3.svg.axis().orient("left").ticks(6);
-
-
-
 
     // add x axis
     detailVis.append("g")
@@ -512,11 +513,6 @@ var captionText = [];
 
 // add form
 var form = menu.append("form");
-
-// tag categories
-var categories = [{id: "sh", name: "sexual health", children: ["cly", "syp", "hiv", "gon"]},
-                  {id: "sb", name: "social behavior", children: ["teen", "gdp", "pop"]},
-                  {id: "porn", name: "pornography usage", children: []}];
 
 // helper array to save on computations
 var tagsArray = [];
