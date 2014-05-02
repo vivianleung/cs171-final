@@ -501,7 +501,7 @@ function createDetailVis(){
               dx:(bbDetail.w/2+bbDetail.p)+"px",y:(bbDetail.p)+"px"});
 }
 
-// menu code
+// MENU CODE
 var menu = d3.select("#menu");
 
 // add caption
@@ -578,16 +578,16 @@ function updateForm(array) {
     captionText.forEach(function(d, i) {
       text += " " + '<span class="factor">' + d.name + '</span>';
       // format punctuation and grammar
-      if(i == captionText.length - 1 && captionText.length < 3) {
+      if(i == captionText.length - 1 && captionText.length < 2) {
         text += " and..."
       }
 
-      else if(i < captionText.length - 1 && !(i == 1 && captionText.length == 3)){
-        text += ", ";
+      else if(i < captionText.length - 1 && !(i == 1 && captionText.length == 2)){
+        text += " and ";
       }
 
-      else if(i == 1 && captionText.length == 3) {
-        text += " and ";
+      else if(i == 1 && captionText.length == 2) {
+        text += "." + "<br/>" + "Press back to pick new options";
       }
     });
 
@@ -606,6 +606,8 @@ function updateForm(array) {
   array.forEach(function(d, i) {
     d3.select("input[value=\"" + d.id + "\"]").
       on("click", function() {
+
+      if (captionText.length < 2) {
         // go into category
         if(d.children) {
           currentCategory = d.name;
@@ -622,6 +624,7 @@ function updateForm(array) {
           loadFactor(d.id);
           updateForm(categories);
         }
+      }
       });
   });
 }
