@@ -32,13 +32,6 @@ var height = 400 - margin.bottom - margin.top;
 var selected;
 var clickedState;
 
-var helperVis = d3.select("#detailVis").append("svg").attr({
-    width:(bbDetail.w+5*bbDetail.p),
-    height:(bbDetail.h+5*bbDetail.p),
-    })
-var radarVis = helperVis.append("g").attr("id","radar");
-var detailVis = helperVis.append("g").attr("id","graph")
-    .attr("transform", "translate("+(2*bbDetail.p)+","+bbDetail.p+")");
 
 // possible tags
 var tags = {"cly": "chlamydia",
@@ -85,7 +78,7 @@ var mins = {};
 var maxs = {};
 var ranges = {};
 var averages = {};
-var tooltip;
+var tooltip, detailVis;
 var xDetailAxis, xDetailAxis, yDetailAxis, yDetailScale, hDetailScale;
 
 // tag categories
@@ -107,6 +100,10 @@ function loadFactor(factor) {
   }
 }
 function updateMap() {
+  if (!d3.select("#detailVis").select("svg#graph")[0][0]) { 
+    d3.select("#detailVis").select("svg#radar")[0][0].remove();
+    createDetailVis();
+  }
 
     // calculates RGB color value for datum based on selected factor(s)
     var colorize = function(datum) {
@@ -143,8 +140,6 @@ function updateMap() {
     
   // most recently selected factor
   var factor = "";
-  detailVis.style("display","inline");
-  radarVis.style("display","none");
 
   // removes old circles
   detailVis.select("g.factordata").remove();
@@ -293,8 +288,9 @@ function updateMap() {
       Object.keys(factors[x]).forEach(function(st){
         var obj = {};
         obj["state"] = st;
-        obj[x] = factors[x][st]["rate_per_pop"];
-        obj[y] = factors[y][st]["rate_per_pop"];
+        [x,y].forEach(function(f){
+          if (factors[f][st]) {obj[f] = factors[f][st]["rate_per_pop"];} 
+        })
         dataSet.push(obj);
 
       })
@@ -309,12 +305,9 @@ function updateMap() {
          .enter()
          .append("circle")
          .attr("class", "stateDot")
-         .attr("cx", function(d) {
-            return xDetailScale(d[x]);
-         })
-         .attr("cy", function(d) {
-            return yDetailScale(d[y]);
-         })
+         .attr("fill", function(d) {return colors[d.state]} )
+         .attr("cx", function(d) { return xDetailScale(d[x]); })
+         .attr("cy", function(d) { return yDetailScale(d[y]); })
          .attr("r", bbDetail.r);
 
       }
@@ -468,6 +461,15 @@ function movetip(d) {
 }
 
 function createDetailVis(){
+
+    detailVis = d3.select("#detailVis").append("svg").attr({
+    id:"graph",
+    width:(bbDetail.w+5*bbDetail.p),
+    height:(bbDetail.h+5*bbDetail.p),
+    })
+    .append("g")
+    .attr("transform", "translate("+(2*bbDetail.p)+","+bbDetail.p+")");
+
 
     // scales and axes (to update with domains of user-selected factors)
     xDetailScale = d3.scale.linear().range([10, bbDetail.w]);
@@ -665,8 +667,8 @@ function displaySundial(d) {
       h: 400,
       labels: [d.properties.name, "National Average"]
     }
-    detailVis.style("display","none");
-    radarVis.style("display","inline");
+
+    detailVis.select("svg#graph").remove();
     RadarChart.draw("#detailVis", [points, average], attributes);
   }
 }

@@ -51,7 +51,6 @@ text{
 }
 
 .stateDot{
-  fill:teal;
   opacity: .7;
   z-index: 100
 }
