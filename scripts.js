@@ -34,14 +34,32 @@ var clickedState;
 
 
 // possible tags
-var tags = {"cly": "chlamydia",
-            "syp": "syphilis",
+var tags = {"cly": "Chlamydia",
+            "syp": "Syphilis",
             "hiv": "HIV",
-            "gon": "gonorrhea",
-            "teen": "teen pregnancy",
+            "gon": "Gonorrhea",
+            "teen": "Teen Pregnancy",
             "gdp": "GDP",
-            "pop": "population density",
-            "soon": "coming soon!"};
+            "pop": "Population Density",
+            "anal": "Anal",
+            "anita_queen": "Anita Queen",
+            "asian": "Asian",
+            "bbw": "Big Beautiful Women",
+            "brcc":"Backroom Casting Couch",
+            "college": "College",
+            "compilation": "Compilation",
+            "creampie": "Creampie",
+            "ebony": "Ebody",
+            "hawaii": "Hawaii",
+            "hentai": "Hentai",
+            "lesbian": "Lesbian",
+            "massage": "Massage",
+            "milf": "Milf",
+            "parody": "Parody",
+            "pov": "Point of View",
+            "smoking": "Smoking",
+            "teen": "Teen",
+            "wife": "Wife"};
 
 
 tooltip = d3.select('#vis').append("div").attr({id:'tooltip'}).style("position", "absolute")
@@ -84,7 +102,7 @@ var xDetailAxis, xDetailAxis, yDetailAxis, yDetailScale, hDetailScale;
 // tag categories
 var categories = [{id: "sh", name: "sexual health", children: ["cly", "syp", "hiv", "gon"]},
                   {id: "sb", name: "social behavior", children: ["teen", "gdp", "pop"]},
-                  {id: "porn", name: "pornography usage", children: ["soon"]}];
+                  {id: "porn", name: "pornography usage", children: ["anal", "anita_queen", "asian", "bbw", "brcc", "college", "compilation", "creampie", "ebony", "hawaii", "hentai", "lesbian", "massage", "milf", "parody", "pov", "smoking", "teen", "wife"]}];
 
 
 
