@@ -20,8 +20,7 @@ var RadarChart = {
         }
       }
     }
-    d3.select(id).select("svg").remove();
-    var g = d3.select(id).append("svg").attr("width", cfg.w).attr("height", cfg.h).append("g");
+    var g = d3.select(id).select('g#radar').attr("width", cfg.w).attr("height", cfg.h).append("g");
     g.attr("transform", "translate(0, 50)");
 
     // update height and width
