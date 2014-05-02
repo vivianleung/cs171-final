@@ -358,7 +358,7 @@ function loadStats() {
 
   // iterate over all factors
   dataFiles.forEach(function(factor) {
-    var filePath = "/data/" + factor + "_data.csv";
+    var filePath = "/Data/" + factor + "_data.csv";
 
     d3.csv(filePath, function(error,data){
       // find min, max and average
@@ -392,7 +392,7 @@ function loadStats() {
     });
   });
 
-  d3.text("../data/porn_prefs.csv", function(text) {
+  d3.text("/Data/porn_prefs.csv", function(text) {
     var data = d3.csv.parseRows(text);
     var headers = data.shift();
     var header_len = headers.length;
@@ -438,7 +438,7 @@ function loadStats() {
   factors.loaded = [];
 }
 
-d3.json("/data/us-named.json", function(error, data) {
+d3.json("/Data/us-named.json", function(error, data) {
     var usMap = topojson.feature(data,data.objects.states).features
     
     svg.selectAll(".country").data(usMap).enter().append("path").attr("d", path).attr("class","state")
