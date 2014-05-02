@@ -41,25 +41,26 @@ var tags = {"cly": "Chlamydia",
             "teen": "Teen Pregnancy",
             "gdp": "GDP",
             "pop": "Population Density",
-            "anal": "Anal",
-            "anita_queen": "Anita Queen",
-            "asian": "Asian",
-            "bbw": "Big Beautiful Women",
-            "brcc":"Backroom Casting Couch",
-            "college": "College",
-            "compilation": "Compilation",
-            "creampie": "Creampie",
-            "ebony": "Ebody",
-            "hawaii": "Hawaii",
-            "hentai": "Hentai",
-            "lesbian": "Lesbian",
-            "massage": "Massage",
-            "milf": "Milf",
-            "parody": "Parody",
-            "pov": "Point of View",
-            "smoking": "Smoking",
-            "teen": "Teen",
-            "wife": "Wife"};
+            "porn_avg_time": "Average Porn Viewing Time",
+            "porn_anal": "Anal",
+            "porn_anita_queen": "Anita Queen",
+            "porn_asian": "Asian",
+            "porn_bbw": "Big Beautiful Women",
+            "porn_brcc":"Backroom Casting Couch",
+            "porn_college": "College",
+            "porn_compilation": "Compilation",
+            "porn_creampie": "Creampie",
+            "porn_ebony": "Ebody",
+            "porn_hawaii": "Hawaii",
+            "porn_hentai": "Hentai",
+            "porn_lesbian": "Lesbian",
+            "porn_massage": "Massage",
+            "porn_milf": "Milf",
+            "porn_parody": "Parody",
+            "porn_pov": "Point of View",
+            "porn_smoking": "Smoking",
+            "porn_teen": "Teen",
+            "porn_wife": "Wife"};
 
 
 tooltip = d3.select('#vis').append("div").attr({id:'tooltip'}).style("position", "absolute")
@@ -102,7 +103,7 @@ var xDetailAxis, xDetailAxis, yDetailAxis, yDetailScale, hDetailScale;
 // tag categories
 var categories = [{id: "sh", name: "sexual health", children: ["cly", "syp", "hiv", "gon"]},
                   {id: "sb", name: "social behavior", children: ["teen", "gdp", "pop"]},
-                  {id: "porn", name: "pornography usage", children: ["anal", "anita_queen", "asian", "bbw", "brcc", "college", "compilation", "creampie", "ebony", "hawaii", "hentai", "lesbian", "massage", "milf", "parody", "pov", "smoking", "teen", "wife"]}];
+                  {id: "porn", name: "pornography usage", children: ["porn_anal", "porn_anita_queen", "porn_asian", "porn_bbw", "porn_brcc", "porn_college", "porn_compilation", "porn_creampie", "porn_ebony", "porn_hawaii", "porn_hentai", "porn_lesbian", "porn_massage", "porn_milf", "porn_parody", "porn_pov", "porn_smoking", "porn_teen", "porn_wife"]}];
 
 
 
@@ -126,7 +127,7 @@ function updateMap() {
     // calculates RGB color value for datum based on selected factor(s)
     var colorize = function(datum) {
 
-      if (datum.length == 0) { return "grey"} 
+      if (datum.length == 0) { return "lightgray"} 
       else {
         var scaled_factors_sum = 0;
         var scaled_factors = [];
@@ -183,7 +184,10 @@ function updateMap() {
         var state_values = [];
         params.forEach(function(f) {
           if(d["properties"]["name"] in factors[f]) {
-            state_values.push(factors[f][d["properties"]["name"]]["rate_per_pop"]);
+            var val = d["properties"]["name"]["rate_per_pop"];
+            if (val != "Not Rated") {  
+              state_values.push(factors[f][d["properties"]["name"]]["rate_per_pop"]);            
+            }
           }
         })
         colors[d["properties"]["name"]] = colorize(state_values);          
@@ -202,7 +206,7 @@ function updateMap() {
       hDetailScale.domain([mins[params], maxs[params]]);
       // set up values dataSet with bins
       var values = [];
-      hDetailScale.range().forEach(function(bin) { values[bin] = {states:[]} });
+      hDetailScale.range().forEach(function(b) { values[b] = {states:[]} });
 
       // sort states into bins
       Object.keys(factors[params]).forEach(function(st) {
@@ -210,7 +214,7 @@ function updateMap() {
         obj["state"] = st;
         obj["rate_per_pop"] = factors[params][st]["rate_per_pop"];
         var bin = hDetailScale(obj["rate_per_pop"]);
-        values[bin].states.push(obj);
+        values[bin]["states"].push(obj);
       })
  
        // sets x scale, axis (for plotting) with padding to accomodate bins
@@ -410,15 +414,16 @@ function loadStats() {
     data.forEach(function(factor) {
       var factor_name = "porn_"+factor[0];
       factors[factor_name] = {};
-      var min, max;
+      var min = 4;
+      var max;
       for (var st=1; st<header_len; st++ ) {
-        var rank = 4;
-        if (factor[st]) { rank = parseInt(factor[st]);}
-        factors[factor_name][headers[st]] = {"state": headers[st], "rate_per_pop": rank}
-
-        // min and max are reversed to reflect the 
-        if (!min || min < rank) { min = rank; }
-        if (!max || max > rank) { max = rank; }
+        var rank;
+        if (factor[st]) { 
+          rank = parseInt(factor[st]);
+          // min and max are reversed to reflect the 
+          if (!max || max > rank) { max = rank; }
+          factors[factor_name][headers[st]] = {"state": headers[st], "rate_per_pop": rank}
+        }
         
       }
       mins[factor_name] = min;
@@ -534,11 +539,20 @@ var captionText = [];
 var form = menu.append("form");
 
 // helper array to save on computations
+
 var tagsArray = [];
-var keys = Object.keys(tags);
-for(tag in keys) {
-  tagsArray.push({id: keys[tag], name: tags[keys[tag]]});
-}
+categories.forEach(function(cat){
+    cat.children.forEach(function(tag) { 
+      tagsArray.push({id: tag, name: tags[tag], cat: cat.id});  
+    })
+});
+
+// var keys = Object.keys(tags);
+// for(tag in keys) {
+//   tagsArray.push({id: keys[tag], name: tags[keys[tag]]});
+// }
+
+console.log(tagsArray)
 
 var currentCategory = null;
 
@@ -666,12 +680,13 @@ function displaySundial(d) {
   var average = [];
 
   var tagIds = tagsArray.map(function(d) {
-    return d.id;
+    if (d.cat != "porn") { return d.id;}
   });
 
   if(factors) {
     for(key in factors) {
       if(tagIds.indexOf(key) >= 0) {
+        tagIds
         points.push({"axis": tags[key].toUpperCase(), "value": (factors[key][d.properties.name].rate_per_pop)/(maxs[key] - mins[key])});
         average.push({"axis": tags[key].toUpperCase(), "value": averages[key]/(maxs[key] - mins[key])});
       }
