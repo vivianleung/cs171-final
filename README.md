@@ -1,7 +1,7 @@
-CS171 Final Project
+**CS171 Final Project
 Lucas Freitas
 Vivian Leung
-Charles Lovett
+Charles Lovett**
 
 What is the landscape of sex in the United States? Here we sought to illuminate this complexity by bringing together various aspects of sex and sexual health. 
 
@@ -15,7 +15,7 @@ img: background, flair, fun.
 
 js: these are our libraries: TOPOjson, d3, jquery, and radar-chart.js. TOPOjson was used to plot the map (used pset 4 as a springboard), d3 was used for dynamic graphs,  jquery for css selectors, and radar for the radar chart. 
 
-Scripts can be found in scripts.js, styles in styles.css, and the homepage in index.html.
+**Scripts** can be found in scripts.js, styles in styles.css, and the homepage in index.html.
 
 <a href="http://lfreitas.com/sex">Click here for our Website!</a>
 
