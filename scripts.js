@@ -438,7 +438,7 @@ function loadStats() {
   factors.loaded = [];
 }
 
-d3.json("../data/us-named.json", function(error, data) {
+d3.json("/data/us-named.json", function(error, data) {
     var usMap = topojson.feature(data,data.objects.states).features
     
     svg.selectAll(".country").data(usMap).enter().append("path").attr("d", path).attr("class","state")
