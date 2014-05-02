@@ -254,11 +254,7 @@ function updateMap() {
          .attr("y", function(d) {return yDetailScale(d.freq) - bbDetail.p/2; });
          
 
-      // tooltip stuff
-  
-
-
-
+    
 
     }
 
