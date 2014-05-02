@@ -32,11 +32,12 @@ var height = 400 - margin.bottom - margin.top;
 var selected;
 var clickedState;
 
-var detailVis = d3.select("#detailVis").append("svg").attr({
+var helperVis = d3.select("#detailVis").append("svg").attr({
     width:(bbDetail.w+5*bbDetail.p),
     height:(bbDetail.h+5*bbDetail.p),
     })
-    .append("g")
+var radarVis = helperVis.append("g").attr("id","radar");
+var detailVis = helperVis.append("g").attr("id","graph")
     .attr("transform", "translate("+(2*bbDetail.p)+","+bbDetail.p+")");
 
 // possible tags
@@ -142,6 +143,8 @@ function updateMap() {
     
   // most recently selected factor
   var factor = "";
+  detailVis.style("display","inline");
+  radarVis.style("display","none");
 
   // removes old circles
   detailVis.select("g.factordata").remove();
@@ -449,7 +452,6 @@ function movetip(d) {
     if (factors.loaded.length > 0) {
       factors.loaded.forEach(function(selector){
         tipHTML += "<br/>"+tags[selector]+": "+factors[selector][d.properties.name].rate_per_pop; 
-
       })
     }
 
@@ -627,6 +629,7 @@ updateForm(categories);
 // sundial code
 
 function displaySundial(d) {
+
   // hide tip
   d3.select(".fa-arrow-down").style("display", "none");
   d3.select("#tip > p").style("display", "none");
@@ -662,7 +665,8 @@ function displaySundial(d) {
       h: 400,
       labels: [d.properties.name, "National Average"]
     }
-
+    detailVis.style("display","none");
+    radarVis.style("display","inline");
     RadarChart.draw("#detailVis", [points, average], attributes);
   }
 }
