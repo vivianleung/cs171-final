@@ -55,6 +55,15 @@ text{
   opacity: .7;
   z-index: 100
 }
+
+.stateBar{
+  fill:teal;
+  opacity: .7;
+  z-index: 100;
+  stroke: #fff;
+
+}
+
 .hasData{
   fill:#00d9bd;
   opacity: 1;

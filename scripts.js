@@ -76,7 +76,7 @@ var maxs = {};
 var ranges = {};
 var averages = {};
 var tooltip;
-var xDetailAxis, xDetailAxis, yDetailAxis, yDetailScale, hist;
+var xDetailAxis, xDetailAxis, yDetailAxis, yDetailScale, hDetailScale;
 
 function loadFactor(factor) {
 
@@ -123,7 +123,7 @@ function updateMap() {
   var factor = "";
 
   // removes old circles
-  detailVis.select("g.circles").remove();
+  detailVis.select("g.factordata").remove();
 
   // if no factors selected, reset state colors to default color
   if (factors.loaded.length == 0) {
@@ -155,19 +155,101 @@ function updateMap() {
       .style("stroke", "white");
 
   
-    // // GRAPH UPDATES!
-    // xDetailScale.domain([mins[params[0]], maxs[params[0]]]);
-    // xDetailAxis.scale(xDetailScale);
+    // GRAPH UPDATES!
 
-    // // 1 factor selected:  Histogram
-    // if(params.length == 1) {
-    //   var values = 
-    //   hist.bins(xDetailScale.ticks(12))
+    // 1 factor selected:  Histogram
+    if(params.length == 1) {
+      params = params[0];
+
+      // update domain of quantize scale for binning
+      hDetailScale.domain([mins[params], maxs[params]]);
+      // set up values dataSet with bins
+      var values = [];
+      hDetailScale.range().forEach(function(bin) { values[bin] = {states:[]} });
+
+      // sort states into bins
+      Object.keys(factors[params]).forEach(function(st) {
+        var obj = {};
+        obj["state"] = st;
+        obj["rate_per_pop"] = factors[params][st]["rate_per_pop"];
+        var bin = hDetailScale(obj["rate_per_pop"]);
+        values[bin].states.push(obj);
+      })
+ 
+       // sets x scale, axis (for plotting) with padding to accomodate bins
+      var bin_value_size = hDetailScale.invertExtent(1)[1]-hDetailScale.invertExtent(1)[0];
+      xDetailScale.domain([mins[params]-bin_value_size/2, maxs[params]+bin_value_size/2]);
+
+      var roundTo = 0;
+      var quotient = ranges[params]/12;
+      if (quotient < 1) {
+        do { quotient = quotient*12;
+             roundTo--; }
+        while (quotient < 1);
+      }
+      else if (quotient >= 12) {
+        do { quotient = quotient/12;
+             roundTo++; }
+        while (quotient >= 12);
+      }
+
+      // make tick vlues based on hDetail range (invert?)
+      xDetailAxis.scale(xDetailScale)
+        .tickValues(function(d) {
+          var v = values.map(function(b, i) {
+            b["val"] =  d3.round(hDetailScale.invertExtent(i)[1]-bin_value_size/2, roundTo); 
+            return b["val"];
+          })
+          return v;
+        })
+
+      // counts frequencies, sets up y scale: (1) find domain, (2) set scale, axis
+      var bin_min;
+      var bin_max;
+      values.forEach(function(b, i) {
+        var freq = b.states.length;
+        b["freq"] = freq;
+        if (!bin_min || bin_min > b["freq"]) {bin_min = b["freq"];}
+        if (!bin_max || bin_max < b["freq"]) { bin_max= b["freq"];}
+      })
+
+      yDetailScale.domain([bin_max, 0]);
+      yDetailAxis.scale(yDetailScale);
+
+      // append bars for each bin (adjust position for tick)
+      detailVis.select("g.x.axis").call(xDetailAxis)
+          .selectAll("text:not(.label)") 
+          .style("text-anchor", "end")
+          .attr("dx", "-.8em").attr("dy", ".15em")
+          .attr("transform", function(d) { return "rotate(-65)" });
+      detailVis.select("g.x.axis").select("text.label").text(tags[params]);
+
+      detailVis.select("g.y.axis").call(yDetailAxis)
+        .select("text.label").text("Frequency");
+      var bar_pad = 2;
+      
+      var bin_plot_size = xDetailScale(hDetailScale.invertExtent(1)[1]) - xDetailScale(hDetailScale.invertExtent(1)[0])
+      // add bars
+      var bars = detailVis.append("g")
+         .attr("class","factordata")
+         .attr("transform","translate("+bbDetail.p+","+bbDetail.p+")")
+         .selectAll("rect")
+         .data(values)
+         .enter()
+         .append("rect")
+         .attr({class:"stateBar", width:bin_plot_size - 2*bar_pad})
+         .attr("height", function(d) {return yDetailScale(d.freq)})
+         .attr("x", function(d) { return xDetailScale(d.val) - bar_pad - bin_plot_size/2; })
+         .attr("y", function(d) {return bbDetail.h - yDetailScale(d.freq); });
+         
+
+      // tooltip stuff
+  
 
 
 
 
-    // }
+    }
 
     // // 2 factors selected:  XY Plot
     // else if (params.length == 2) {
@@ -176,55 +258,56 @@ function updateMap() {
     // }
 
 
-    // update scales and axes with appropriate domains
-    xDetailScale.domain([mins[params[0]], maxs[params[0]] + 1]);
+    // // update scales and axes with appropriate domains
+    // xDetailScale.domain([mins[params[0]], maxs[params[0]]]);
 
-    yDetailScale.domain([maxs[params[0]], 0]);
+    // yDetailScale.domain([maxs[params[0]], 0]);
 
-    xDetailAxis.scale(xDetailScale);
-    yDetailAxis.scale(yDetailScale);
+    // xDetailAxis.scale(xDetailScale);
+    // yDetailAxis.scale(yDetailScale);
 
-    var xAxis = detailVis.select("g.x.axis")
-    var factor = params[0];
-    xAxis.call(xDetailAxis)
-        .selectAll("text:not(.label)") 
-        .style("text-anchor", "end")
-        .attr("dx", "-.8em").attr("dy", ".15em")
-        .attr("transform", function(d) { return "rotate(-65)" });
+    // var xAxis = detailVis.select("g.x.axis")
+    // var factor = params[0];
+    // xAxis.call(xDetailAxis)
+    //     .selectAll("text:not(.label)") 
+    //     .style("text-anchor", "end")
+    //     .attr("dx", "-.8em").attr("dy", ".15em")
+    //     .attr("transform", function(d) { return "rotate(-65)" });
 
-    xAxis.select("text.label").text(factor)
+    // xAxis.select("text.label").text(factor)
 
-    detailVis.select("g.y.axis").call(yDetailAxis)
-      .select("text.label").text(factor);
+    // detailVis.select("g.y.axis").call(yDetailAxis)
+    //   .select("text.label").text(factor);
 
-    var dataSet = [];
-      Object.keys(factors[factor]).forEach(function(id) {
-        dataSet.push(factors[factor][id]);
-      });
+    // var dataSet = [];
+    //   Object.keys(factors[factor]).forEach(function(id) {
+    //     dataSet.push(factors[factor][id]);
+    //   });
+    // console.log(dataSet)
 
 
-    // add bars
-    var bars = detailVis.append("g")
-       .attr("class","circles")
-       .attr("transform","translate("+bbDetail.p+","+bbDetail.p+")")
-       .selectAll("circle")
-       .data(dataSet)
-       .enter()
-       .append("circle")
-       .attr("class", "stateDot")
-       .attr("cx", function(d) {
-          return xDetailScale(d["rate_per_pop"]);
-       })
-       .attr("cy", function(d) {
-          return yDetailScale(d["rate_per_pop"]);
-       })
-       .attr("r", bbDetail.r);
+    // // add bars
+    // var bars = detailVis.append("g")
+    //    .attr("class","circles")
+    //    .attr("transform","translate("+bbDetail.p+","+bbDetail.p+")")
+    //    .selectAll("circle")
+    //    .data(dataSet)
+    //    .enter()
+    //    .append("circle")
+    //    .attr("class", "stateDot")
+    //    .attr("cx", function(d) {
+    //       return xDetailScale(d["rate_per_pop"]);
+    //    })
+    //    .attr("cy", function(d) {
+    //       return yDetailScale(d["rate_per_pop"]);
+    //    })
+    //    .attr("r", bbDetail.r);
 
-    }
+    // }
 
     // update title
     detailVis.select('text.title').text(factor);
-    
+  }
 }
 
 // possible tags
@@ -236,7 +319,6 @@ var tags = {"cly": "chlamydia",
             "gdp": "GDP",
             "pop": "population density",
             "creampie": "teen tag",
-            "stateID": "state index",
             "teen-tag": "creampie tag"};
 
 // possible tags
@@ -253,7 +335,7 @@ var scales = {"cly": {scale: 100000, unit: "people"},
 function loadStats() {
   // file names for each of the factors
 
-  var dataFiles = ["cly", "gon", "syp", "teen", "creampie", "teen-tag"];
+  var dataFiles = ["cly", "gon", "syp", "teen", "gdp", "pop"];
 
   // iterate over all factors
   dataFiles.forEach(function(factor) {
@@ -267,7 +349,7 @@ function loadStats() {
 
       // create factor array
       factors[factor] = {}
-
+      console.log(factor, Object.keys(data))
       Object.keys(data).forEach(function(id) {
           data[id]["rate_per_pop"] = parseFloat(data[id]["rate_per_pop"]);
           factors[factor][data[id]["state"]] = data[id];
@@ -328,6 +410,8 @@ function loadStats() {
       mins[factor_name] = min;
       maxs[factor_name] = max;
       ranges[factor_name] = max - min;
+      tags[factor_name] = factor[0];
+      categories[2].children.push(factor_name);
     })
   })
 
@@ -385,10 +469,13 @@ function createDetailVis(){
     // scales and axes (to update with domains of user-selected factors)
     xDetailScale = d3.scale.linear().range([10, bbDetail.w]);
     yDetailScale = d3.scale.linear().range([10, bbDetail.h]);
+    hDetailScale = d3.scale.quantize().range(d3.range(12));
+
     xDetailAxis = d3.svg.axis().orient("bottom").ticks(5);
     yDetailAxis = d3.svg.axis().orient("left").ticks(6);
 
-    hist = d3.layout.histogram();
+
+
 
     // add x axis
     detailVis.append("g")
@@ -428,8 +515,8 @@ var form = menu.append("form");
 
 // tag categories
 var categories = [{id: "sh", name: "sexual health", children: ["cly", "syp", "hiv", "gon"]},
-                  {id: "sb", name: "social behavior", children: ["teen", "gdp", "pop", "stateID"]},
-                  {id: "porn", name: "pornography usage", children: ["creampie", "teen-tag"]}];
+                  {id: "sb", name: "social behavior", children: ["teen", "gdp", "pop"]},
+                  {id: "porn", name: "pornography usage", children: []}];
 
 // helper array to save on computations
 var tagsArray = [];
