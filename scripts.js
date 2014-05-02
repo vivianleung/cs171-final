@@ -46,7 +46,8 @@ var tags = {"cly": "chlamydia",
             "gon": "gonorrhea",
             "teen": "teen pregnancy",
             "gdp": "GDP",
-            "pop": "population density"};
+            "pop": "population density",
+            "soon": "coming soon!"};
 
 
 tooltip = d3.select('#vis').append("div").attr({id:'tooltip'}).style("position", "absolute")
@@ -89,7 +90,7 @@ var xDetailAxis, xDetailAxis, yDetailAxis, yDetailScale, hDetailScale;
 // tag categories
 var categories = [{id: "sh", name: "sexual health", children: ["cly", "syp", "hiv", "gon"]},
                   {id: "sb", name: "social behavior", children: ["teen", "gdp", "pop"]},
-                  {id: "porn", name: "pornography usage", children: []}];
+                  {id: "porn", name: "pornography usage", children: ["soon"]}];
 
 
 
