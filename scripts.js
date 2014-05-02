@@ -358,7 +358,7 @@ function loadStats() {
 
   // iterate over all factors
   dataFiles.forEach(function(factor) {
-    var filePath = "../data/" + factor + "_data.csv";
+    var filePath = "/data/" + factor + "_data.csv";
 
     d3.csv(filePath, function(error,data){
       // find min, max and average
